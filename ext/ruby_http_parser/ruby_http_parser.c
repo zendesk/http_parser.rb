@@ -29,7 +29,6 @@ static char upcase[] =
   "________________________________";
 
 typedef struct ParserWrapper {
-  http_parser_settings settings;
   http_parser parser;
   VALUE env;
   VALUE on_message_complete;
@@ -38,6 +37,7 @@ typedef struct ParserWrapper {
   VALUE last_field_name;
   const char *last_field_name_at;
   size_t last_field_name_length;
+  enum http_parser_type type;
 } ParserWrapper;
 
 static VALUE eParseError;
@@ -104,9 +104,7 @@ int on_header_field(http_parser *parser, const char *at, size_t length) {
 
 int on_header_value(http_parser *parser, const char *at, size_t length) {
   GET_WRAPPER(wrapper, parser);
-  
-  VALUE name = Qnil;
-  
+
   if (wrapper->last_field_name == Qnil) {
     wrapper->last_field_name = rb_str_new(HEADER_PREFIX, sizeof(HEADER_PREFIX) - 1 + wrapper->last_field_name_length);
     
@@ -159,6 +157,18 @@ int on_message_complete(http_parser *parser) {
   return 0;
 }
 
+static http_parser_settings settings = {
+  .on_message_begin = on_message_begin,
+  .on_path = on_path,
+  .on_query_string = on_query_string,
+  .on_url = on_url,
+  .on_fragment = on_fragment,
+  .on_header_field = on_header_field,
+  .on_header_value = on_header_value,
+  .on_headers_complete = on_headers_complete,
+  .on_body = on_body,
+  .on_message_complete = on_message_complete
+};
 
 /** Usual ruby C stuff **/
 
@@ -171,10 +181,12 @@ void Parser_free(void *data) {
   }
 }
 
-VALUE Parser_alloc(VALUE klass) {
+VALUE Parser_alloc_by_type(VALUE klass, enum http_parser_type type) {
   ParserWrapper *wrapper = ALLOC_N(ParserWrapper, 1);
-  http_parser_init(&wrapper->parser, klass == cRequestParser ? HTTP_REQUEST : klass == cResponseParser ? HTTP_RESPONSE : HTTP_BOTH);
-  
+  http_parser_init(&wrapper->parser, type);
+
+  wrapper->type = type;
+
   wrapper->env = Qnil;
   wrapper->on_message_complete = Qnil;
   wrapper->on_headers_complete = Qnil;
@@ -183,22 +195,22 @@ VALUE Parser_alloc(VALUE klass) {
   wrapper->last_field_name = Qnil;
   wrapper->last_field_name_at = NULL;
   wrapper->last_field_name_length = 0;
-  
-  // Init callbacks
-  wrapper->settings.on_message_begin = on_message_begin;
-  wrapper->settings.on_path = on_path;
-  wrapper->settings.on_query_string = on_query_string;
-  wrapper->settings.on_url = on_url;
-  wrapper->settings.on_fragment = on_fragment;
-  wrapper->settings.on_header_field = on_header_field;
-  wrapper->settings.on_header_value = on_header_value;
-  wrapper->settings.on_headers_complete = on_headers_complete;
-  wrapper->settings.on_body = on_body;
-  wrapper->settings.on_message_complete = on_message_complete;
-  
+
   wrapper->parser.data = wrapper;
 
   return Data_Wrap_Struct(klass, NULL, Parser_free, wrapper);
+}
+
+VALUE Parser_alloc(VALUE klass) {
+  return Parser_alloc_by_type(klass, HTTP_BOTH);
+}
+
+VALUE RequestParser_alloc(VALUE klass) {
+  return Parser_alloc_by_type(klass, HTTP_REQUEST);
+}
+
+VALUE ResponseParser_alloc(VALUE klass) {
+  return Parser_alloc_by_type(klass, HTTP_RESPONSE);
 }
 
 VALUE Parser_execute(VALUE self, VALUE data) {
@@ -207,12 +219,14 @@ VALUE Parser_execute(VALUE self, VALUE data) {
   long len = RSTRING_LEN(data);
   
   DATA_GET(self, ParserWrapper, wrapper);
-  
-  size_t nparsed = http_parser_execute(&wrapper->parser, &wrapper->settings, ptr, len);
-  
+
+  size_t nparsed = http_parser_execute(&wrapper->parser, &settings, ptr, len);
+
   if (nparsed != len) {
-    rb_raise(eParseError, "Invalid request");
+    rb_raise(eParseError, "Could not parse data entirely");
   }
+
+  return Qnil;
 }
 
 VALUE Parser_set_on_headers_complete(VALUE self, VALUE callback) {
@@ -256,6 +270,9 @@ void Init_ruby_http_parser() {
   DEF_CONST(sFragment, "FRAGMENT");
   
   rb_define_alloc_func(cParser, Parser_alloc);
+  rb_define_alloc_func(cRequestParser, RequestParser_alloc);
+  rb_define_alloc_func(cResponseParser, ResponseParser_alloc);
+
   rb_define_method(cParser, "on_message_complete=", Parser_set_on_message_complete, 1);
   rb_define_method(cParser, "on_headers_complete=", Parser_set_on_headers_complete, 1);
   rb_define_method(cParser, "on_body=", Parser_set_on_body, 1);
