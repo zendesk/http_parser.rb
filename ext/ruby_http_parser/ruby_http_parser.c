@@ -6,14 +6,14 @@
 #define DEF_CONST(N, val)     N = rb_obj_freeze(rb_str_new2(val)); rb_global_variable(&N)
 #define GET_WRAPPER(N, from)  ParserWrapper *N = (ParserWrapper *)(from)->data;
 
-#define HASH_CAT(h, k, ptr, len) \
-  do { \
-    VALUE __v = rb_hash_aref(h, k); \
-    if (__v != Qnil) { \
-      rb_str_cat(__v, ptr, len); \
-    } else { \
+#define HASH_CAT(h, k, ptr, len)                \
+  do {                                          \
+    VALUE __v = rb_hash_aref(h, k);             \
+    if (__v != Qnil) {                          \
+      rb_str_cat(__v, ptr, len);                \
+    } else {                                    \
       rb_hash_aset(h, k, rb_str_new(ptr, len)); \
-    } \
+    }                                           \
   } while(0)
 
 
