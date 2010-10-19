@@ -251,12 +251,15 @@ VALUE Parser_set_on_body(VALUE self, VALUE callback) {
 
 
 void Init_ruby_http_parser() {
-  VALUE mHTTP = rb_define_module_under(rb_define_module("Net"), "HTTP");
-  VALUE cParser = rb_define_class_under(mHTTP, "Parser", rb_cObject);
-  VALUE cRequestParser = rb_define_class_under(mHTTP, "RequestParser", cParser);
-  VALUE cResponseParser = rb_define_class_under(mHTTP, "ResponseParser", cParser);
+  rb_require("net/http");
+
+  VALUE mNet = rb_define_module("Net");
+  VALUE cHTTP = rb_const_get(mNet, rb_intern("HTTP"));
+  VALUE cParser = rb_define_class_under(cHTTP, "Parser", rb_cObject);
+  VALUE cRequestParser = rb_define_class_under(cHTTP, "RequestParser", cParser);
+  VALUE cResponseParser = rb_define_class_under(cHTTP, "ResponseParser", cParser);
   
-  eParserError = rb_define_class_under(mHTTP, "ParseError", rb_eIOError);
+  eParserError = rb_define_class_under(cHTTP, "ParseError", rb_eIOError);
   sCall = rb_intern("call");
   
   // String constants
