@@ -172,12 +172,8 @@ void Parser_free(void *data) {
 }
 
 VALUE Parser_alloc(VALUE klass) {
-  if (klass != cRequestParser && klass != cResponseParser) {
-    rb_raise(rb_eRuntimeError, "invalid parser type");
-  }
-
   ParserWrapper *wrapper = ALLOC_N(ParserWrapper, 1);
-  http_parser_init(&wrapper->parser, klass == cRequestParser ? HTTP_REQUEST : HTTP_RESPONSE);
+  http_parser_init(&wrapper->parser, klass == cRequestParser ? HTTP_REQUEST : klass == cResponseParser ? HTTP_RESPONSE : HTTP_BOTH);
   
   wrapper->env = Qnil;
   wrapper->on_message_complete = Qnil;
@@ -245,15 +241,12 @@ VALUE Parser_set_on_body(VALUE self, VALUE callback) {
 
 
 void Init_ruby_http_parser() {
-  rb_require("net/http");
-
-  VALUE mNet = rb_define_module("Net");
-  VALUE cHTTP = rb_const_get(mNet, rb_intern("HTTP"));
-  cParser = rb_define_class_under(cHTTP, "Parser", rb_cObject);
-  cRequestParser = rb_define_class_under(cHTTP, "RequestParser", cParser);
-  cResponseParser = rb_define_class_under(cHTTP, "ResponseParser", cParser);
+  VALUE mHTTP = rb_define_module("HTTP");
+  cParser = rb_define_class_under(mHTTP, "Parser", rb_cObject);
+  cRequestParser = rb_define_class_under(mHTTP, "RequestParser", cParser);
+  cResponseParser = rb_define_class_under(mHTTP, "ResponseParser", cParser);
   
-  eParserError = rb_define_class_under(cHTTP, "ParseError", rb_eIOError);
+  eParserError = rb_define_class_under(mHTTP, "ParseError", rb_eIOError);
   sCall = rb_intern("call");
   
   // String constants

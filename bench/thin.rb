@@ -1,7 +1,7 @@
 $:.unshift File.dirname(__FILE__) + "/../lib"
 require "rubygems"
 require "thin_parser"
-require "net/http/parser"
+require "http_parser"
 require "benchmark"
 
 data = "POST /postit HTTP/1.1\r\n" +
@@ -28,7 +28,7 @@ def http_parser(data)
   body = StringIO.new
   env = nil
   
-  parser = Net::HTTP::RequestParser.new
+  parser = HTTP::RequestParser.new
   parser.on_headers_complete = proc { |e| env = e }
   parser.on_body = proc { |c| body << c }
   parser << data

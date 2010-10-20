@@ -4,9 +4,9 @@ Ruby bindings to http://github.com/ry/http-parser
 
 ## Usage
 
-    require "net/http/parser"
+    require "http_parser"
     
-    parser = Net::HTTP::RequestParser.new
+    parser = HTTP::RequestParser.new
     
     parser.on_headers_complete = proc do |env|
       # Rack formatted env hash

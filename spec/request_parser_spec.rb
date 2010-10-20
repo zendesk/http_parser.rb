@@ -1,8 +1,8 @@
 require File.dirname(__FILE__) + "/spec_helper"
 
-describe Net::HTTP::RequestParser do
+describe HTTP::Parser do
   before do
-    @parser = Net::HTTP::RequestParser.new
+    @parser = HTTP::Parser.new
   end
   
   it "should parse GET" do
