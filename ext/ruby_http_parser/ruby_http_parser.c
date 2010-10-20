@@ -40,7 +40,7 @@ typedef struct ParserWrapper {
   size_t last_field_name_length;
 } ParserWrapper;
 
-static VALUE eParserError;
+static VALUE eParseError;
 static VALUE sCall;
 static VALUE sPathInfo;
 static VALUE sQueryString;
@@ -211,7 +211,7 @@ VALUE Parser_execute(VALUE self, VALUE data) {
   size_t nparsed = http_parser_execute(&wrapper->parser, &wrapper->settings, ptr, len);
   
   if (nparsed != len) {
-    rb_raise(eParserError, "Invalid request");
+    rb_raise(eParseError, "Invalid request");
   }
 }
 
@@ -246,7 +246,7 @@ void Init_ruby_http_parser() {
   cRequestParser = rb_define_class_under(mHTTP, "RequestParser", cParser);
   cResponseParser = rb_define_class_under(mHTTP, "ResponseParser", cParser);
   
-  eParserError = rb_define_class_under(mHTTP, "ParseError", rb_eIOError);
+  eParseError = rb_define_class_under(mHTTP, "ParseError", rb_eIOError);
   sCall = rb_intern("call");
   
   // String constants
