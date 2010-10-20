@@ -5,4 +5,5 @@ tmp
 *.so
 *.bundle
 *.jar
+*.swp
 Makefile
