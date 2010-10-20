@@ -253,6 +253,50 @@ VALUE Parser_set_on_body(VALUE self, VALUE callback) {
   return callback;
 }
 
+VALUE Parser_keep_alive_p(VALUE self) {
+  ParserWrapper *wrapper = NULL;
+  DATA_GET(self, ParserWrapper, wrapper);
+
+  return http_should_keep_alive(&wrapper->parser) == 1 ? Qtrue : Qfalse;
+}
+
+VALUE Parser_upgrade_p(VALUE self) {
+  ParserWrapper *wrapper = NULL;
+  DATA_GET(self, ParserWrapper, wrapper);
+
+  return wrapper->parser.upgrade == 1 ? Qtrue : Qfalse;
+}
+
+VALUE Parser_http_major(VALUE self) {
+  ParserWrapper *wrapper = NULL;
+  DATA_GET(self, ParserWrapper, wrapper);
+
+  return INT2FIX(wrapper->parser.http_major);
+}
+
+VALUE Parser_http_minor(VALUE self) {
+  ParserWrapper *wrapper = NULL;
+  DATA_GET(self, ParserWrapper, wrapper);
+
+  return INT2FIX(wrapper->parser.http_minor);
+}
+
+VALUE Parser_http_method(VALUE self) {
+  ParserWrapper *wrapper = NULL;
+  DATA_GET(self, ParserWrapper, wrapper);
+
+  return rb_str_new2(http_method_str(wrapper->parser.method));
+}
+
+VALUE Parser_status_code(VALUE self) {
+  ParserWrapper *wrapper = NULL;
+  DATA_GET(self, ParserWrapper, wrapper);
+
+  if (wrapper->parser.status_code)
+    return INT2FIX(wrapper->parser.status_code);
+  else
+    return Qnil;
+}
 
 void Init_ruby_http_parser() {
   VALUE mHTTP = rb_define_module("HTTP");
@@ -277,4 +321,11 @@ void Init_ruby_http_parser() {
   rb_define_method(cParser, "on_headers_complete=", Parser_set_on_headers_complete, 1);
   rb_define_method(cParser, "on_body=", Parser_set_on_body, 1);
   rb_define_method(cParser, "<<", Parser_execute, 1);
+
+  rb_define_method(cParser, "keep_alive?", Parser_keep_alive_p, 0);
+  rb_define_method(cParser, "upgrade?", Parser_upgrade_p, 0);
+  rb_define_method(cParser, "http_major", Parser_http_major, 0);
+  rb_define_method(cParser, "http_minor", Parser_http_minor, 0);
+  rb_define_method(cParser, "http_method", Parser_http_method, 0);
+  rb_define_method(cParser, "status_code", Parser_status_code, 0);
 }
