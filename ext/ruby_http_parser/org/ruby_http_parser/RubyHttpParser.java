@@ -199,4 +199,42 @@ public class RubyHttpParser extends RubyObject {
     return runtime.getTrue();
   }
 
+  @JRubyMethod(name = "keep_alive?")
+  public IRubyObject shouldKeepAlive() {
+    // return parser.shouldKeepAlive() ? runtime.getTrue() : runtime.getFalse();
+    return runtime.getFalse();
+  }
+
+  @JRubyMethod(name = "upgrade?")
+  public IRubyObject shouldUpgrade() {
+    return parser.getUpgrade() ? runtime.getTrue() : runtime.getFalse();
+  }
+
+  @JRubyMethod(name = "http_major")
+  public IRubyObject httpMajor() {
+    return RubyNumeric.int2fix(runtime, parser.getMajor());
+  }
+
+  @JRubyMethod(name = "http_minor")
+  public IRubyObject httpMinor() {
+    return RubyNumeric.int2fix(runtime, parser.getMinor());
+  }
+
+  @JRubyMethod(name = "http_method")
+  public IRubyObject httpMethod() {
+    HTTPMethod method = parser.getHTTPMethod();
+    if (method != null)
+      return runtime.newString(new String(method.bytes));
+    else
+      return runtime.getNil();
+  }
+
+  @JRubyMethod(name = "status_code")
+  public IRubyObject statusCode() {
+    int code = parser.getStatusCode();
+    if (code != 0)
+      return RubyNumeric.int2fix(runtime, code);
+    else
+      return runtime.getNil();
+  }
 }
