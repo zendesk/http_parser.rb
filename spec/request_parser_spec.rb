@@ -21,6 +21,7 @@ describe HTTP::Parser do
                "World"
 
     env["PATH_INFO"].should == "/test"
+    env["QUERY_STRING"].should == "ok=1"
     env["HTTP_HOST"].should == "0.0.0.0:5000"
     body.should == "World"
   end
