@@ -12,7 +12,7 @@ major Ruby platforms (JRuby, MRI 1.8 and 1.9, win32 and Rubinius).
 
     require "http_parser"
 
-    parser = HTTP::RequestParser.new
+    parser = HTTP::Parser.new
 
     parser.on_headers_complete = proc do |env|
       # Rack formatted env hash
