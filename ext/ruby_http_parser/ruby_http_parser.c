@@ -59,7 +59,7 @@ int on_message_begin(http_parser *parser) {
     rb_gc_unregister_address(&wrapper->env);
   wrapper->env = rb_hash_new();
   rb_gc_register_address(&wrapper->env);
-  
+
   return 0;
 }
 
@@ -89,16 +89,16 @@ int on_fragment(http_parser *parser, const char *at, size_t length) {
 
 int on_header_field(http_parser *parser, const char *at, size_t length) {
   GET_WRAPPER(wrapper, parser);
-  
+
   wrapper->last_field_name = Qnil;
-  
+
   if (wrapper->last_field_name_at == NULL) {
     wrapper->last_field_name_at = at;
     wrapper->last_field_name_length = length;
   } else {
     wrapper->last_field_name_length += length;
   }
-  
+
   return 0;
 }
 
@@ -107,7 +107,7 @@ int on_header_value(http_parser *parser, const char *at, size_t length) {
 
   if (wrapper->last_field_name == Qnil) {
     wrapper->last_field_name = rb_str_new(HEADER_PREFIX, sizeof(HEADER_PREFIX) - 1 + wrapper->last_field_name_length);
-    
+
     // normalize header name
     size_t name_length = wrapper->last_field_name_length;
     const char *name_at = wrapper->last_field_name_at;
@@ -117,43 +117,43 @@ int on_header_value(http_parser *parser, const char *at, size_t length) {
       char *ch = name_ptr + i;
       *ch = upcase[(int)name_at[i]];
     }
-    
+
     wrapper->last_field_name_at = NULL;
     wrapper->last_field_name_length = 0;
   }
-  
+
   HASH_CAT(wrapper->env, wrapper->last_field_name, at, length);
-  
+
   return 0;
 }
 
 int on_headers_complete(http_parser *parser) {
   GET_WRAPPER(wrapper, parser);
-  
+
   if (wrapper->on_headers_complete != Qnil) {
     rb_funcall(wrapper->on_headers_complete, sCall, 1, wrapper->env);
   }
-  
+
   return 0;
 }
 
 int on_body(http_parser *parser, const char *at, size_t length) {
   GET_WRAPPER(wrapper, parser);
-  
+
   if (wrapper->on_body != Qnil) {
     rb_funcall(wrapper->on_body, sCall, 1, rb_str_new(at, length));
   }
-  
+
   return 0;
 }
 
 int on_message_complete(http_parser *parser) {
   GET_WRAPPER(wrapper, parser);
-  
+
   if (wrapper->on_message_complete != Qnil) {
     rb_funcall(wrapper->on_message_complete, sCall, 1, wrapper->env);
   }
-  
+
   return 0;
 }
 
@@ -191,7 +191,7 @@ VALUE Parser_alloc_by_type(VALUE klass, enum http_parser_type type) {
   wrapper->on_message_complete = Qnil;
   wrapper->on_headers_complete = Qnil;
   wrapper->on_body = Qnil;
-  
+
   wrapper->last_field_name = Qnil;
   wrapper->last_field_name_at = NULL;
   wrapper->last_field_name_length = 0;
@@ -217,7 +217,7 @@ VALUE Parser_execute(VALUE self, VALUE data) {
   ParserWrapper *wrapper = NULL;
   char *ptr = RSTRING_PTR(data);
   long len = RSTRING_LEN(data);
-  
+
   DATA_GET(self, ParserWrapper, wrapper);
 
   size_t nparsed = http_parser_execute(&wrapper->parser, &settings, ptr, len);
@@ -232,7 +232,7 @@ VALUE Parser_execute(VALUE self, VALUE data) {
 VALUE Parser_set_on_headers_complete(VALUE self, VALUE callback) {
   ParserWrapper *wrapper = NULL;
   DATA_GET(self, ParserWrapper, wrapper);
-  
+
   wrapper->on_headers_complete = callback;
   return callback;
 }
@@ -240,7 +240,7 @@ VALUE Parser_set_on_headers_complete(VALUE self, VALUE callback) {
 VALUE Parser_set_on_message_complete(VALUE self, VALUE callback) {
   ParserWrapper *wrapper = NULL;
   DATA_GET(self, ParserWrapper, wrapper);
-  
+
   wrapper->on_message_complete = callback;
   return callback;
 }
@@ -248,7 +248,7 @@ VALUE Parser_set_on_message_complete(VALUE self, VALUE callback) {
 VALUE Parser_set_on_body(VALUE self, VALUE callback) {
   ParserWrapper *wrapper = NULL;
   DATA_GET(self, ParserWrapper, wrapper);
-  
+
   wrapper->on_body = callback;
   return callback;
 }
@@ -259,16 +259,16 @@ void Init_ruby_http_parser() {
   cParser = rb_define_class_under(mHTTP, "Parser", rb_cObject);
   cRequestParser = rb_define_class_under(mHTTP, "RequestParser", cParser);
   cResponseParser = rb_define_class_under(mHTTP, "ResponseParser", cParser);
-  
+
   eParseError = rb_define_class_under(mHTTP, "ParseError", rb_eIOError);
   sCall = rb_intern("call");
-  
+
   // String constants
   DEF_CONST(sPathInfo, "PATH_INFO");
   DEF_CONST(sQueryString, "QUERY_STRING");
   DEF_CONST(sURL, "REQUEST_URI");
   DEF_CONST(sFragment, "FRAGMENT");
-  
+
   rb_define_alloc_func(cParser, Parser_alloc);
   rb_define_alloc_func(cRequestParser, RequestParser_alloc);
   rb_define_alloc_func(cResponseParser, ResponseParser_alloc);

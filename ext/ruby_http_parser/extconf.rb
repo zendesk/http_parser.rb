@@ -1,5 +1,5 @@
 require 'mkmf'
- 
+
 http_parser_dir = File.expand_path(File.dirname(__FILE__) + '/../http-parser')
 $CFLAGS << " -I#{http_parser_dir} "
 

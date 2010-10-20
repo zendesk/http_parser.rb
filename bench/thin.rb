@@ -27,12 +27,12 @@ end
 def http_parser(data)
   body = StringIO.new
   env = nil
-  
+
   parser = HTTP::RequestParser.new
   parser.on_headers_complete = proc { |e| env = e }
   parser.on_body = proc { |c| body << c }
   parser << data
-  
+
   env["rack-input"] = body
   env
 end
@@ -51,7 +51,7 @@ end
 # thin:          1.470000   0.000000   1.470000 (  1.474737)
 # http-parser:   1.270000   0.020000   1.290000 (  1.292758)
 # --------------------------------------- total: 2.760000sec
-# 
+#
 #                    user     system      total        real
 # thin:          1.150000   0.030000   1.180000 (  1.173767)
 # http-parser:   1.250000   0.010000   1.260000 (  1.263796)
