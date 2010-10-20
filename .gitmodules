@@ -1,6 +1,6 @@
-[submodule "ext/http-parser"]
-	path = ext/http-parser
+[submodule "ext/ruby_http_parser/vendor/http-parser"]
+	path = ext/ruby_http_parser/vendor/http-parser
 	url = git://github.com/ry/http-parser.git
-[submodule "ext/http-parser.java"]
-	path = ext/http-parser.java
+[submodule "ext/ruby_http_parser/vendor/http-parser-java"]
+	path = ext/ruby_http_parser/vendor/http-parser-java
 	url = git://github.com/a2800276/http-parser.java.git
