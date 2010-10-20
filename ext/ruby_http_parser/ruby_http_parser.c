@@ -29,6 +29,7 @@ static char upcase[] =
   "________________________________";
 
 typedef struct ParserWrapper {
+  http_parser_settings settings;
   http_parser parser;
   VALUE env;
   VALUE on_message_complete;
@@ -45,6 +46,9 @@ static VALUE sPathInfo;
 static VALUE sQueryString;
 static VALUE sURL;
 static VALUE sFragment;
+static VALUE cRequestParser;
+static VALUE cResponseParser;
+static VALUE cParser;
 
 /** Callbacks **/
 
@@ -168,8 +172,12 @@ void Parser_free(void *data) {
 }
 
 VALUE Parser_alloc(VALUE klass) {
+  if (klass != cRequestParser && klass != cResponseParser) {
+    rb_raise(rb_eRuntimeError, "invalid parser type");
+  }
+
   ParserWrapper *wrapper = ALLOC_N(ParserWrapper, 1);
-  http_parser_init(&wrapper->parser);
+  http_parser_init(&wrapper->parser, klass == cRequestParser ? HTTP_REQUEST : HTTP_RESPONSE);
   
   wrapper->env = Qnil;
   wrapper->on_message_complete = Qnil;
@@ -181,47 +189,33 @@ VALUE Parser_alloc(VALUE klass) {
   wrapper->last_field_name_length = 0;
   
   // Init callbacks
-  wrapper->parser.on_message_begin = on_message_begin;
-  wrapper->parser.on_path = on_path;
-  wrapper->parser.on_query_string = on_query_string;
-  wrapper->parser.on_url = on_url;
-  wrapper->parser.on_fragment = on_fragment;
-  wrapper->parser.on_header_field = on_header_field;
-  wrapper->parser.on_header_value = on_header_value;
-  wrapper->parser.on_headers_complete = on_headers_complete;
-  wrapper->parser.on_body = on_body;
-  wrapper->parser.on_message_complete = on_message_complete;
+  wrapper->settings.on_message_begin = on_message_begin;
+  wrapper->settings.on_path = on_path;
+  wrapper->settings.on_query_string = on_query_string;
+  wrapper->settings.on_url = on_url;
+  wrapper->settings.on_fragment = on_fragment;
+  wrapper->settings.on_header_field = on_header_field;
+  wrapper->settings.on_header_value = on_header_value;
+  wrapper->settings.on_headers_complete = on_headers_complete;
+  wrapper->settings.on_body = on_body;
+  wrapper->settings.on_message_complete = on_message_complete;
   
   wrapper->parser.data = wrapper;
 
   return Data_Wrap_Struct(klass, NULL, Parser_free, wrapper);
 }
 
-VALUE Parser_parse_requests(VALUE self, VALUE data) {
+VALUE Parser_execute(VALUE self, VALUE data) {
   ParserWrapper *wrapper = NULL;
   char *ptr = RSTRING_PTR(data);
   long len = RSTRING_LEN(data);
   
   DATA_GET(self, ParserWrapper, wrapper);
   
-  size_t nparsed = http_parse_requests(&wrapper->parser, ptr, len);
+  size_t nparsed = http_parser_execute(&wrapper->parser, &wrapper->settings, ptr, len);
   
   if (nparsed != len) {
     rb_raise(eParserError, "Invalid request");
-  }
-}
-
-VALUE Parser_parse_responses(VALUE self, VALUE data) {
-  ParserWrapper *wrapper = NULL;
-  char *ptr = RSTRING_PTR(data);
-  long len = RSTRING_LEN(data);
-  
-  DATA_GET(self, ParserWrapper, wrapper);
-  
-  size_t nparsed = http_parse_responses(&wrapper->parser, ptr, len);
-  
-  if (nparsed != len) {
-    rb_raise(eParserError, "Invalid response");
   }
 }
 
@@ -255,9 +249,9 @@ void Init_ruby_http_parser() {
 
   VALUE mNet = rb_define_module("Net");
   VALUE cHTTP = rb_const_get(mNet, rb_intern("HTTP"));
-  VALUE cParser = rb_define_class_under(cHTTP, "Parser", rb_cObject);
-  VALUE cRequestParser = rb_define_class_under(cHTTP, "RequestParser", cParser);
-  VALUE cResponseParser = rb_define_class_under(cHTTP, "ResponseParser", cParser);
+  cParser = rb_define_class_under(cHTTP, "Parser", rb_cObject);
+  cRequestParser = rb_define_class_under(cHTTP, "RequestParser", cParser);
+  cResponseParser = rb_define_class_under(cHTTP, "ResponseParser", cParser);
   
   eParserError = rb_define_class_under(cHTTP, "ParseError", rb_eIOError);
   sCall = rb_intern("call");
@@ -272,7 +266,5 @@ void Init_ruby_http_parser() {
   rb_define_method(cParser, "on_message_complete=", Parser_set_on_message_complete, 1);
   rb_define_method(cParser, "on_headers_complete=", Parser_set_on_headers_complete, 1);
   rb_define_method(cParser, "on_body=", Parser_set_on_body, 1);
-
-  rb_define_method(cRequestParser, "<<", Parser_parse_requests, 1);
-  rb_define_method(cResponseParser, "<<", Parser_parse_responses, 1);
+  rb_define_method(cParser, "<<", Parser_execute, 1);
 }
