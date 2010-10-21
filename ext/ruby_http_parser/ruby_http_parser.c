@@ -231,7 +231,9 @@ VALUE Parser_execute(VALUE self, VALUE data) {
 
   size_t nparsed = http_parser_execute(&wrapper->parser, &settings, ptr, len);
 
-  if (nparsed != len) {
+  if (wrapper->parser.upgrade) {
+    // upgrade request
+  } else if (nparsed != len) {
     rb_raise(eParseError, "Could not parse data entirely");
   }
 
@@ -309,7 +311,10 @@ VALUE Parser_http_method(VALUE self) {
   ParserWrapper *wrapper = NULL;
   DATA_GET(self, ParserWrapper, wrapper);
 
-  return rb_str_new2(http_method_str(wrapper->parser.method));
+  if (wrapper->parser.type == HTTP_REQUEST)
+    return rb_str_new2(http_method_str(wrapper->parser.method));
+  else
+    return Qnil;
 }
 
 VALUE Parser_status_code(VALUE self) {

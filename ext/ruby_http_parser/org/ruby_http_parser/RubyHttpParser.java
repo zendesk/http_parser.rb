@@ -233,8 +233,11 @@ public class RubyHttpParser extends RubyObject {
       throw new RaiseException(runtime, eParseError, e.getMessage(), true);
     }
 
-    if (buf.position() != buf.limit())
+    if (parser.getUpgrade()) {
+      // upgrade request
+    } else if (buf.hasRemaining()) {
       throw new RaiseException(runtime, eParseError, "Could not parse data entirely", true);
+    }
 
     return runtime.getTrue();
   }
