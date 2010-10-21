@@ -16,7 +16,7 @@ describe HTTP::Parser do
     @parser.on_message_complete = proc{ @done = true }
   end
 
-  it "should pass smoke test" do
+  it "should implement basic api" do
     @parser <<
       "GET /test?ok=1 HTTP/1.1\r\n" +
       "User-Agent: curl/7.18.0\r\n" +
@@ -46,7 +46,6 @@ describe HTTP::Parser do
 
     @body.should == "World"
   end
-
 
   %w[ request response ].each do |type|
     JSON.parse(File.read(File.expand_path("../support/#{type}s.json", __FILE__))).each do |test|
