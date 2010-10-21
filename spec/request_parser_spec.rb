@@ -8,8 +8,10 @@ describe HTTP::Parser do
   it "should parse GET" do
     env = nil
     body = ""
+    started = false
     done = false
 
+    @parser.on_message_begin = proc{ started = true }
     @parser.on_headers_complete = proc { |e| env = e }
     @parser.on_body = proc { |chunk| body << chunk }
     @parser.on_message_complete = proc{ done = true }
@@ -22,16 +24,24 @@ describe HTTP::Parser do
                "\r\n" +
                "World"
 
+    started.should be_true
+    done.should be_true
+
     @parser.http_major.should == 1
     @parser.http_minor.should == 1
+    @parser.http_version.should == [1,1]
     @parser.http_method.should == 'GET'
     @parser.status_code.should be_nil
 
-    env["PATH_INFO"].should == "/test"
-    env["QUERY_STRING"].should == "ok=1"
-    env["HTTP_HOST"].should == "0.0.0.0:5000"
+    @parser.request_url.should == '/test?ok=1'
+    @parser.request_path.should == '/test'
+    @parser.query_string.should == 'ok=1'
+    @parser.fragment.should be_empty
+
+    @parser.headers.should == env
+    @parser.headers['User-Agent'].should == 'curl/7.18.0'
+    @parser.headers['Host'].should == '0.0.0.0:5000'
 
     body.should == "World"
-    done.should be_true
   end
 end

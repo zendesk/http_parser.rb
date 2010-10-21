@@ -2,10 +2,7 @@
 #include "ext_help.h"
 #include "http_parser.c"
 
-#define HEADER_PREFIX         "HTTP_"
-#define DEF_CONST(N, val)     N = rb_obj_freeze(rb_str_new2(val)); rb_global_variable(&N)
 #define GET_WRAPPER(N, from)  ParserWrapper *N = (ParserWrapper *)(from)->data;
-
 #define HASH_CAT(h, k, ptr, len)                \
   do {                                          \
     VALUE __v = rb_hash_aref(h, k);             \
@@ -16,74 +13,118 @@
     }                                           \
   } while(0)
 
-
-// Stolen from Ebb
-static char upcase[] =
-  "\0______________________________"
-  "_________________0123456789_____"
-  "__ABCDEFGHIJKLMNOPQRSTUVWXYZ____"
-  "__ABCDEFGHIJKLMNOPQRSTUVWXYZ____"
-  "________________________________"
-  "________________________________"
-  "________________________________"
-  "________________________________";
-
 typedef struct ParserWrapper {
   http_parser parser;
-  VALUE env;
-  VALUE on_message_complete;
+
+  VALUE request_url;
+  VALUE request_path;
+  VALUE query_string;
+  VALUE fragment;
+
+  VALUE headers;
+
+  VALUE on_message_begin;
   VALUE on_headers_complete;
   VALUE on_body;
+  VALUE on_message_complete;
+
   VALUE last_field_name;
   const char *last_field_name_at;
   size_t last_field_name_length;
+
   enum http_parser_type type;
 } ParserWrapper;
 
-static VALUE eParseError;
-static VALUE sCall;
-static VALUE sPathInfo;
-static VALUE sQueryString;
-static VALUE sURL;
-static VALUE sFragment;
+void ParserWrapper_init(ParserWrapper *wrapper) {
+  http_parser_init(&wrapper->parser, wrapper->type);
+  wrapper->parser.status_code = 0;
+
+  wrapper->headers = Qnil;
+
+  wrapper->on_message_begin = Qnil;
+  wrapper->on_headers_complete = Qnil;
+  wrapper->on_body = Qnil;
+  wrapper->on_message_complete = Qnil;
+
+  wrapper->request_url = Qnil;
+  wrapper->request_path = Qnil;
+  wrapper->query_string = Qnil;
+  wrapper->fragment = Qnil;
+
+  wrapper->last_field_name = Qnil;
+  wrapper->last_field_name_at = NULL;
+  wrapper->last_field_name_length = 0;
+}
+
+void ParserWrapper_mark(void *data) {
+  if(data) {
+    ParserWrapper *wrapper = (ParserWrapper *) data;
+    rb_gc_mark_maybe(wrapper->request_url);
+    rb_gc_mark_maybe(wrapper->request_path);
+    rb_gc_mark_maybe(wrapper->query_string);
+    rb_gc_mark_maybe(wrapper->fragment);
+    rb_gc_mark_maybe(wrapper->headers);
+    rb_gc_mark_maybe(wrapper->on_message_begin);
+    rb_gc_mark_maybe(wrapper->on_headers_complete);
+    rb_gc_mark_maybe(wrapper->on_body);
+    rb_gc_mark_maybe(wrapper->on_message_complete);
+    rb_gc_mark_maybe(wrapper->last_field_name);
+  }
+}
+
+void ParserWrapper_free(void *data) {
+  if(data) {
+    free(data);
+  }
+}
+
+static VALUE cParser;
 static VALUE cRequestParser;
 static VALUE cResponseParser;
-static VALUE cParser;
+
+static VALUE eParseError;
+
+static VALUE sCall;
 
 /** Callbacks **/
 
 int on_message_begin(http_parser *parser) {
   GET_WRAPPER(wrapper, parser);
-  // Init env Rack hash
-  if (wrapper->env != Qnil)
-    rb_gc_unregister_address(&wrapper->env);
-  wrapper->env = rb_hash_new();
-  rb_gc_register_address(&wrapper->env);
 
-  return 0;
-}
+  wrapper->request_url = rb_str_new2("");
+  wrapper->request_path = rb_str_new2("");
+  wrapper->query_string = rb_str_new2("");
+  wrapper->fragment = rb_str_new2("");
+  wrapper->headers = rb_hash_new();
 
-int on_path(http_parser *parser, const char *at, size_t length) {
-  GET_WRAPPER(wrapper, parser);
-  HASH_CAT(wrapper->env, sPathInfo, at, length);
-  return 0;
-}
+  if (wrapper->on_message_begin != Qnil) {
+    rb_funcall(wrapper->on_message_begin, sCall, 0);
+  }
 
-int on_query_string(http_parser *parser, const char *at, size_t length) {
-  GET_WRAPPER(wrapper, parser);
-  HASH_CAT(wrapper->env, sQueryString, at, length);
   return 0;
 }
 
 int on_url(http_parser *parser, const char *at, size_t length) {
   GET_WRAPPER(wrapper, parser);
-  HASH_CAT(wrapper->env, sURL, at, length);
+  rb_str_cat(wrapper->request_url, at, length);
+  return 0;
+}
+
+int on_path(http_parser *parser, const char *at, size_t length) {
+  GET_WRAPPER(wrapper, parser);
+  rb_str_cat(wrapper->request_path, at, length);
+  return 0;
+}
+
+int on_query_string(http_parser *parser, const char *at, size_t length) {
+  GET_WRAPPER(wrapper, parser);
+  rb_str_cat(wrapper->query_string, at, length);
   return 0;
 }
 
 int on_fragment(http_parser *parser, const char *at, size_t length) {
   GET_WRAPPER(wrapper, parser);
-  HASH_CAT(wrapper->env, sFragment, at, length);
+  rb_str_cat(wrapper->fragment, at, length);
   return 0;
 }
 
@@ -106,23 +147,12 @@ int on_header_value(http_parser *parser, const char *at, size_t length) {
   GET_WRAPPER(wrapper, parser);
 
   if (wrapper->last_field_name == Qnil) {
-    wrapper->last_field_name = rb_str_new(HEADER_PREFIX, sizeof(HEADER_PREFIX) - 1 + wrapper->last_field_name_length);
-
-    // normalize header name
-    size_t name_length = wrapper->last_field_name_length;
-    const char *name_at = wrapper->last_field_name_at;
-    char *name_ptr = RSTRING_PTR(wrapper->last_field_name) + sizeof(HEADER_PREFIX) - 1;
-    int i;
-    for(i = 0; i < name_length; i++) {
-      char *ch = name_ptr + i;
-      *ch = upcase[(int)name_at[i]];
-    }
-
+    wrapper->last_field_name = rb_str_new(wrapper->last_field_name_at, wrapper->last_field_name_length);
     wrapper->last_field_name_at = NULL;
     wrapper->last_field_name_length = 0;
   }
 
-  HASH_CAT(wrapper->env, wrapper->last_field_name, at, length);
+  HASH_CAT(wrapper->headers, wrapper->last_field_name, at, length);
 
   return 0;
 }
@@ -131,7 +161,7 @@ int on_headers_complete(http_parser *parser) {
   GET_WRAPPER(wrapper, parser);
 
   if (wrapper->on_headers_complete != Qnil) {
-    rb_funcall(wrapper->on_headers_complete, sCall, 1, wrapper->env);
+    rb_funcall(wrapper->on_headers_complete, sCall, 1, wrapper->headers);
   }
 
   return 0;
@@ -151,7 +181,7 @@ int on_message_complete(http_parser *parser) {
   GET_WRAPPER(wrapper, parser);
 
   if (wrapper->on_message_complete != Qnil) {
-    rb_funcall(wrapper->on_message_complete, sCall, 1, wrapper->env);
+    rb_funcall(wrapper->on_message_complete, sCall, 0);
   }
 
   return 0;
@@ -170,35 +200,14 @@ static http_parser_settings settings = {
   .on_message_complete = on_message_complete
 };
 
-/** Usual ruby C stuff **/
-
-void Parser_free(void *data) {
-  if(data) {
-    ParserWrapper *wrapper = (ParserWrapper *) data;
-    if (wrapper->env != Qnil)
-      rb_gc_unregister_address(&wrapper->env);
-    free(data);
-  }
-}
-
 VALUE Parser_alloc_by_type(VALUE klass, enum http_parser_type type) {
   ParserWrapper *wrapper = ALLOC_N(ParserWrapper, 1);
-  http_parser_init(&wrapper->parser, type);
-
   wrapper->type = type;
-
-  wrapper->env = Qnil;
-  wrapper->on_message_complete = Qnil;
-  wrapper->on_headers_complete = Qnil;
-  wrapper->on_body = Qnil;
-
-  wrapper->last_field_name = Qnil;
-  wrapper->last_field_name_at = NULL;
-  wrapper->last_field_name_length = 0;
-
   wrapper->parser.data = wrapper;
 
-  return Data_Wrap_Struct(klass, NULL, Parser_free, wrapper);
+  ParserWrapper_init(wrapper);
+
+  return Data_Wrap_Struct(klass, ParserWrapper_mark, ParserWrapper_free, wrapper);
 }
 
 VALUE Parser_alloc(VALUE klass) {
@@ -229,6 +238,14 @@ VALUE Parser_execute(VALUE self, VALUE data) {
   return Qnil;
 }
 
+VALUE Parser_set_on_message_begin(VALUE self, VALUE callback) {
+  ParserWrapper *wrapper = NULL;
+  DATA_GET(self, ParserWrapper, wrapper);
+
+  wrapper->on_message_begin = callback;
+  return callback;
+}
+
 VALUE Parser_set_on_headers_complete(VALUE self, VALUE callback) {
   ParserWrapper *wrapper = NULL;
   DATA_GET(self, ParserWrapper, wrapper);
@@ -237,19 +254,19 @@ VALUE Parser_set_on_headers_complete(VALUE self, VALUE callback) {
   return callback;
 }
 
-VALUE Parser_set_on_message_complete(VALUE self, VALUE callback) {
-  ParserWrapper *wrapper = NULL;
-  DATA_GET(self, ParserWrapper, wrapper);
-
-  wrapper->on_message_complete = callback;
-  return callback;
-}
-
 VALUE Parser_set_on_body(VALUE self, VALUE callback) {
   ParserWrapper *wrapper = NULL;
   DATA_GET(self, ParserWrapper, wrapper);
 
   wrapper->on_body = callback;
+  return callback;
+}
+
+VALUE Parser_set_on_message_complete(VALUE self, VALUE callback) {
+  ParserWrapper *wrapper = NULL;
+  DATA_GET(self, ParserWrapper, wrapper);
+
+  wrapper->on_message_complete = callback;
   return callback;
 }
 
@@ -265,6 +282,13 @@ VALUE Parser_upgrade_p(VALUE self) {
   DATA_GET(self, ParserWrapper, wrapper);
 
   return wrapper->parser.upgrade == 1 ? Qtrue : Qfalse;
+}
+
+VALUE Parser_http_version(VALUE self) {
+  ParserWrapper *wrapper = NULL;
+  DATA_GET(self, ParserWrapper, wrapper);
+
+  return rb_ary_new3(2, INT2FIX(wrapper->parser.http_major), INT2FIX(wrapper->parser.http_minor));
 }
 
 VALUE Parser_http_major(VALUE self) {
@@ -298,6 +322,28 @@ VALUE Parser_status_code(VALUE self) {
     return Qnil;
 }
 
+#define DEFINE_GETTER(name)                  \
+  VALUE Parser_##name(VALUE self) {          \
+    ParserWrapper *wrapper = NULL;           \
+    DATA_GET(self, ParserWrapper, wrapper);  \
+    return wrapper->name;                    \
+  }
+
+DEFINE_GETTER(request_url);
+DEFINE_GETTER(request_path);
+DEFINE_GETTER(query_string);
+DEFINE_GETTER(fragment);
+DEFINE_GETTER(headers);
+
+VALUE Parser_reset(VALUE self) {
+  ParserWrapper *wrapper = NULL;
+  DATA_GET(self, ParserWrapper, wrapper);
+
+  ParserWrapper_init(wrapper);
+
+  return Qtrue;
+}
+
 void Init_ruby_http_parser() {
   VALUE mHTTP = rb_define_module("HTTP");
   cParser = rb_define_class_under(mHTTP, "Parser", rb_cObject);
@@ -307,25 +353,31 @@ void Init_ruby_http_parser() {
   eParseError = rb_define_class_under(mHTTP, "ParseError", rb_eIOError);
   sCall = rb_intern("call");
 
-  // String constants
-  DEF_CONST(sPathInfo, "PATH_INFO");
-  DEF_CONST(sQueryString, "QUERY_STRING");
-  DEF_CONST(sURL, "REQUEST_URI");
-  DEF_CONST(sFragment, "FRAGMENT");
-
   rb_define_alloc_func(cParser, Parser_alloc);
   rb_define_alloc_func(cRequestParser, RequestParser_alloc);
   rb_define_alloc_func(cResponseParser, ResponseParser_alloc);
 
-  rb_define_method(cParser, "on_message_complete=", Parser_set_on_message_complete, 1);
+  rb_define_method(cParser, "on_message_begin=", Parser_set_on_message_begin, 1);
   rb_define_method(cParser, "on_headers_complete=", Parser_set_on_headers_complete, 1);
   rb_define_method(cParser, "on_body=", Parser_set_on_body, 1);
+  rb_define_method(cParser, "on_message_complete=", Parser_set_on_message_complete, 1);
   rb_define_method(cParser, "<<", Parser_execute, 1);
 
   rb_define_method(cParser, "keep_alive?", Parser_keep_alive_p, 0);
   rb_define_method(cParser, "upgrade?", Parser_upgrade_p, 0);
+
+  rb_define_method(cParser, "http_version", Parser_http_version, 0);
   rb_define_method(cParser, "http_major", Parser_http_major, 0);
   rb_define_method(cParser, "http_minor", Parser_http_minor, 0);
+
   rb_define_method(cParser, "http_method", Parser_http_method, 0);
   rb_define_method(cParser, "status_code", Parser_status_code, 0);
+
+  rb_define_method(cParser, "request_url", Parser_request_url, 0);
+  rb_define_method(cParser, "request_path", Parser_request_path, 0);
+  rb_define_method(cParser, "query_string", Parser_query_string, 0);
+  rb_define_method(cParser, "fragment", Parser_fragment, 0);
+  rb_define_method(cParser, "headers", Parser_headers, 0);
+
+  rb_define_method(cParser, "reset!", Parser_reset, 0);
 }
