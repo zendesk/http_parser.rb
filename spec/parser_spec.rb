@@ -54,7 +54,7 @@ describe HTTP::Parser do
       it "should parse #{type}: #{test['name']}" do
         @parser << test['raw']
 
-        @parser.keep_alive?.should == test['should_keep_alive'] unless RUBY_PLATFORM =~ /java/
+        @parser.keep_alive?.should == test['should_keep_alive']
         @parser.upgrade?.should == (test['upgrade']==1)
         @parser.http_method.should == test['method']
 

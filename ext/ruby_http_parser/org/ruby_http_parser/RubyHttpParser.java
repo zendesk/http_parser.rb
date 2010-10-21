@@ -244,8 +244,7 @@ public class RubyHttpParser extends RubyObject {
 
   @JRubyMethod(name = "keep_alive?")
   public IRubyObject shouldKeepAlive() {
-    // return parser.shouldKeepAlive() ? runtime.getTrue() : runtime.getFalse();
-    return runtime.getFalse();
+    return parser.shouldKeepAlive() ? runtime.getTrue() : runtime.getFalse();
   }
 
   @JRubyMethod(name = "upgrade?")
