@@ -7,3 +7,4 @@ tmp
 *.jar
 *.swp
 Makefile
+tags
