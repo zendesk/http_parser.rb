@@ -284,6 +284,8 @@ VALUE Parser_initialize(int argc, VALUE *argv, VALUE self) {
 
   if (argc == 1)
     wrapper->callback_object = argv[0];
+
+  return self;
 }
 
 VALUE Parser_execute(VALUE self, VALUE data) {
