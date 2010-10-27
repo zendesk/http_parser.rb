@@ -1,6 +1,6 @@
 #include "ruby.h"
 #include "ext_help.h"
-#include "http_parser.c"
+#include "ryah_http_parser.h"
 
 #define GET_WRAPPER(N, from)  ParserWrapper *N = (ParserWrapper *)(from)->data;
 #define HASH_CAT(h, k, ptr, len)                \
@@ -14,7 +14,7 @@
   } while(0)
 
 typedef struct ParserWrapper {
-  http_parser parser;
+  ryah_http_parser parser;
 
   VALUE request_url;
   VALUE request_path;
@@ -28,28 +28,28 @@ typedef struct ParserWrapper {
   VALUE on_body;
   VALUE on_message_complete;
 
+  VALUE callback_object;
+  VALUE stopped;
+
   VALUE last_field_name;
   const char *last_field_name_at;
   size_t last_field_name_length;
 
-  enum http_parser_type type;
+  enum ryah_http_parser_type type;
 } ParserWrapper;
 
 void ParserWrapper_init(ParserWrapper *wrapper) {
-  http_parser_init(&wrapper->parser, wrapper->type);
+  ryah_http_parser_init(&wrapper->parser, wrapper->type);
   wrapper->parser.status_code = 0;
-
-  wrapper->headers = Qnil;
-
-  wrapper->on_message_begin = Qnil;
-  wrapper->on_headers_complete = Qnil;
-  wrapper->on_body = Qnil;
-  wrapper->on_message_complete = Qnil;
+  wrapper->parser.http_major = 0;
+  wrapper->parser.http_minor = 0;
 
   wrapper->request_url = Qnil;
   wrapper->request_path = Qnil;
   wrapper->query_string = Qnil;
   wrapper->fragment = Qnil;
+
+  wrapper->headers = Qnil;
 
   wrapper->last_field_name = Qnil;
   wrapper->last_field_name_at = NULL;
@@ -68,6 +68,7 @@ void ParserWrapper_mark(void *data) {
     rb_gc_mark_maybe(wrapper->on_headers_complete);
     rb_gc_mark_maybe(wrapper->on_body);
     rb_gc_mark_maybe(wrapper->on_message_complete);
+    rb_gc_mark_maybe(wrapper->callback_object);
     rb_gc_mark_maybe(wrapper->last_field_name);
   }
 }
@@ -82,13 +83,19 @@ static VALUE cParser;
 static VALUE cRequestParser;
 static VALUE cResponseParser;
 
-static VALUE eParseError;
+static VALUE eParserError;
 
-static VALUE sCall;
+static ID Icall;
+static ID Ion_message_begin;
+static ID Ion_headers_complete;
+static ID Ion_body;
+static ID Ion_message_complete;
+
+static VALUE Sstop;
 
 /** Callbacks **/
 
-int on_message_begin(http_parser *parser) {
+int on_message_begin(ryah_http_parser *parser) {
   GET_WRAPPER(wrapper, parser);
 
   wrapper->request_url = rb_str_new2("");
@@ -97,38 +104,47 @@ int on_message_begin(http_parser *parser) {
   wrapper->fragment = rb_str_new2("");
   wrapper->headers = rb_hash_new();
 
-  if (wrapper->on_message_begin != Qnil) {
-    rb_funcall(wrapper->on_message_begin, sCall, 0);
+  VALUE ret = Qnil;
+
+  if (wrapper->callback_object != Qnil && rb_respond_to(wrapper->callback_object, Ion_message_begin)) {
+    ret = rb_funcall(wrapper->callback_object, Ion_message_begin, 0);
+  } else if (wrapper->on_message_begin != Qnil) {
+    ret = rb_funcall(wrapper->on_message_begin, Icall, 0);
   }
 
-  return 0;
+  if (ret == Sstop) {
+    wrapper->stopped = Qtrue;
+    return -1;
+  } else {
+    return 0;
+  }
 }
 
-int on_url(http_parser *parser, const char *at, size_t length) {
+int on_url(ryah_http_parser *parser, const char *at, size_t length) {
   GET_WRAPPER(wrapper, parser);
   rb_str_cat(wrapper->request_url, at, length);
   return 0;
 }
 
-int on_path(http_parser *parser, const char *at, size_t length) {
+int on_path(ryah_http_parser *parser, const char *at, size_t length) {
   GET_WRAPPER(wrapper, parser);
   rb_str_cat(wrapper->request_path, at, length);
   return 0;
 }
 
-int on_query_string(http_parser *parser, const char *at, size_t length) {
+int on_query_string(ryah_http_parser *parser, const char *at, size_t length) {
   GET_WRAPPER(wrapper, parser);
   rb_str_cat(wrapper->query_string, at, length);
   return 0;
 }
 
-int on_fragment(http_parser *parser, const char *at, size_t length) {
+int on_fragment(ryah_http_parser *parser, const char *at, size_t length) {
   GET_WRAPPER(wrapper, parser);
   rb_str_cat(wrapper->fragment, at, length);
   return 0;
 }
 
-int on_header_field(http_parser *parser, const char *at, size_t length) {
+int on_header_field(ryah_http_parser *parser, const char *at, size_t length) {
   GET_WRAPPER(wrapper, parser);
 
   wrapper->last_field_name = Qnil;
@@ -143,11 +159,17 @@ int on_header_field(http_parser *parser, const char *at, size_t length) {
   return 0;
 }
 
-int on_header_value(http_parser *parser, const char *at, size_t length) {
+int on_header_value(ryah_http_parser *parser, const char *at, size_t length) {
   GET_WRAPPER(wrapper, parser);
 
   if (wrapper->last_field_name == Qnil) {
     wrapper->last_field_name = rb_str_new(wrapper->last_field_name_at, wrapper->last_field_name_length);
+
+    VALUE val = rb_hash_aref(wrapper->headers, wrapper->last_field_name);
+    if (val != Qnil) {
+      rb_str_cat(val, ", ", 2);
+    }
+
     wrapper->last_field_name_at = NULL;
     wrapper->last_field_name_length = 0;
   }
@@ -157,37 +179,64 @@ int on_header_value(http_parser *parser, const char *at, size_t length) {
   return 0;
 }
 
-int on_headers_complete(http_parser *parser) {
+int on_headers_complete(ryah_http_parser *parser) {
   GET_WRAPPER(wrapper, parser);
 
-  if (wrapper->on_headers_complete != Qnil) {
-    rb_funcall(wrapper->on_headers_complete, sCall, 1, wrapper->headers);
+  VALUE ret = Qnil;
+
+  if (wrapper->callback_object != Qnil && rb_respond_to(wrapper->callback_object, Ion_headers_complete)) {
+    ret = rb_funcall(wrapper->callback_object, Ion_headers_complete, 1, wrapper->headers);
+  } else if (wrapper->on_headers_complete != Qnil) {
+    ret = rb_funcall(wrapper->on_headers_complete, Icall, 1, wrapper->headers);
   }
 
-  return 0;
+  if (ret == Sstop) {
+    wrapper->stopped = Qtrue;
+    return -1;
+  } else {
+    return 0;
+  }
 }
 
-int on_body(http_parser *parser, const char *at, size_t length) {
+int on_body(ryah_http_parser *parser, const char *at, size_t length) {
   GET_WRAPPER(wrapper, parser);
 
-  if (wrapper->on_body != Qnil) {
-    rb_funcall(wrapper->on_body, sCall, 1, rb_str_new(at, length));
+  VALUE ret = Qnil;
+
+  if (wrapper->callback_object != Qnil && rb_respond_to(wrapper->callback_object, Ion_body)) {
+    ret = rb_funcall(wrapper->callback_object, Ion_body, 1, rb_str_new(at, length));
+  } else if (wrapper->on_body != Qnil) {
+    ret = rb_funcall(wrapper->on_body, Icall, 1, rb_str_new(at, length));
   }
 
-  return 0;
+  if (ret == Sstop) {
+    wrapper->stopped = Qtrue;
+    return -1;
+  } else {
+    return 0;
+  }
 }
 
-int on_message_complete(http_parser *parser) {
+int on_message_complete(ryah_http_parser *parser) {
   GET_WRAPPER(wrapper, parser);
 
-  if (wrapper->on_message_complete != Qnil) {
-    rb_funcall(wrapper->on_message_complete, sCall, 0);
+  VALUE ret = Qnil;
+
+  if (wrapper->callback_object != Qnil && rb_respond_to(wrapper->callback_object, Ion_message_complete)) {
+    ret = rb_funcall(wrapper->callback_object, Ion_message_complete, 0);
+  } else if (wrapper->on_message_complete != Qnil) {
+    ret = rb_funcall(wrapper->on_message_complete, Icall, 0);
   }
 
-  return 0;
+  if (ret == Sstop) {
+    wrapper->stopped = Qtrue;
+    return -1;
+  } else {
+    return 0;
+  }
 }
 
-static http_parser_settings settings = {
+static ryah_http_parser_settings settings = {
   .on_message_begin = on_message_begin,
   .on_path = on_path,
   .on_query_string = on_query_string,
@@ -200,10 +249,17 @@ static http_parser_settings settings = {
   .on_message_complete = on_message_complete
 };
 
-VALUE Parser_alloc_by_type(VALUE klass, enum http_parser_type type) {
+VALUE Parser_alloc_by_type(VALUE klass, enum ryah_http_parser_type type) {
   ParserWrapper *wrapper = ALLOC_N(ParserWrapper, 1);
   wrapper->type = type;
   wrapper->parser.data = wrapper;
+
+  wrapper->on_message_begin = Qnil;
+  wrapper->on_headers_complete = Qnil;
+  wrapper->on_body = Qnil;
+  wrapper->on_message_complete = Qnil;
+
+  wrapper->callback_object = Qnil;
 
   ParserWrapper_init(wrapper);
 
@@ -222,6 +278,14 @@ VALUE ResponseParser_alloc(VALUE klass) {
   return Parser_alloc_by_type(klass, HTTP_RESPONSE);
 }
 
+VALUE Parser_initialize(int argc, VALUE *argv, VALUE self) {
+  ParserWrapper *wrapper = NULL;
+  DATA_GET(self, ParserWrapper, wrapper);
+
+  if (argc == 1)
+    wrapper->callback_object = argv[0];
+}
+
 VALUE Parser_execute(VALUE self, VALUE data) {
   ParserWrapper *wrapper = NULL;
   char *ptr = RSTRING_PTR(data);
@@ -229,15 +293,19 @@ VALUE Parser_execute(VALUE self, VALUE data) {
 
   DATA_GET(self, ParserWrapper, wrapper);
 
-  size_t nparsed = http_parser_execute(&wrapper->parser, &settings, ptr, len);
+  wrapper->stopped = Qfalse;
+  size_t nparsed = ryah_http_parser_execute(&wrapper->parser, &settings, ptr, len);
 
   if (wrapper->parser.upgrade) {
     // upgrade request
   } else if (nparsed != len) {
-    rb_raise(eParseError, "Could not parse data entirely");
+    if (!RTEST(wrapper->stopped))
+      rb_raise(eParserError, "Could not parse data entirely");
+    else
+      nparsed += 1; // error states fail on the current character
   }
 
-  return Qnil;
+  return INT2FIX(nparsed);
 }
 
 VALUE Parser_set_on_message_begin(VALUE self, VALUE callback) {
@@ -290,21 +358,30 @@ VALUE Parser_http_version(VALUE self) {
   ParserWrapper *wrapper = NULL;
   DATA_GET(self, ParserWrapper, wrapper);
 
-  return rb_ary_new3(2, INT2FIX(wrapper->parser.http_major), INT2FIX(wrapper->parser.http_minor));
+  if (wrapper->parser.http_major == 0 && wrapper->parser.http_minor == 0)
+    return Qnil;
+  else
+    return rb_ary_new3(2, INT2FIX(wrapper->parser.http_major), INT2FIX(wrapper->parser.http_minor));
 }
 
 VALUE Parser_http_major(VALUE self) {
   ParserWrapper *wrapper = NULL;
   DATA_GET(self, ParserWrapper, wrapper);
 
-  return INT2FIX(wrapper->parser.http_major);
+  if (wrapper->parser.http_major == 0 && wrapper->parser.http_minor == 0)
+    return Qnil;
+  else
+    return INT2FIX(wrapper->parser.http_major);
 }
 
 VALUE Parser_http_minor(VALUE self) {
   ParserWrapper *wrapper = NULL;
   DATA_GET(self, ParserWrapper, wrapper);
 
-  return INT2FIX(wrapper->parser.http_minor);
+  if (wrapper->parser.http_major == 0 && wrapper->parser.http_minor == 0)
+    return Qnil;
+  else
+    return INT2FIX(wrapper->parser.http_minor);
 }
 
 VALUE Parser_http_method(VALUE self) {
@@ -355,12 +432,19 @@ void Init_ruby_http_parser() {
   cRequestParser = rb_define_class_under(mHTTP, "RequestParser", cParser);
   cResponseParser = rb_define_class_under(mHTTP, "ResponseParser", cParser);
 
-  eParseError = rb_define_class_under(mHTTP, "ParseError", rb_eIOError);
-  sCall = rb_intern("call");
+  eParserError = rb_define_class_under(cParser, "Error", rb_eIOError);
+  Icall = rb_intern("call");
+  Ion_message_begin = rb_intern("on_message_begin");
+  Ion_headers_complete = rb_intern("on_headers_complete");
+  Ion_body = rb_intern("on_body");
+  Ion_message_complete = rb_intern("on_message_complete");
+  Sstop = ID2SYM(rb_intern("stop"));
 
   rb_define_alloc_func(cParser, Parser_alloc);
   rb_define_alloc_func(cRequestParser, RequestParser_alloc);
   rb_define_alloc_func(cResponseParser, ResponseParser_alloc);
+
+  rb_define_method(cParser, "initialize", Parser_initialize, -1);
 
   rb_define_method(cParser, "on_message_begin=", Parser_set_on_message_begin, 1);
   rb_define_method(cParser, "on_headers_complete=", Parser_set_on_headers_complete, 1);
