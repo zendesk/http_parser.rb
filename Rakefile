@@ -5,7 +5,9 @@ require "rspec/core/rake_task"
 if RUBY_PLATFORM =~ /java/
   Rake::JavaExtensionTask.new("ruby_http_parser")
 else
-  Rake::ExtensionTask.new("ruby_http_parser")
+  Rake::ExtensionTask.new("ruby_http_parser") do |ext|
+    ext.cross_compile = true
+  end
 end
 
 RSpec::Core::RakeTask.new do |t|
