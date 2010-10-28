@@ -1,22 +1,33 @@
-# Ruby bindings to Ryan Dahl's http-parser
+# http_parser.rb
 
-Ruby bindings to http://github.com/ry/http-parser
+A simple callback-based HTTP request/response parser for writing http
+servers, clients and proxies.
 
-## Overview
+This gem is built on top of [ry/http-parser](http://github.com/ry/http-parser) and its java port [a2800276/http-parser.java](http://github.com/a2800276/http-parser.java).
 
-This gem aims to provide a simple Ruby HTTP parser API that can be used
-to build HTTP servers, clients and proxies. The gem will support all
-major Ruby platforms (JRuby, MRI 1.8 and 1.9, win32 and Rubinius).
+## Supported Platforms
+
+This gem aims to work on all major Ruby platforms, including:
+
+- MRI 1.8 and 1.9
+- Rubinius
+- JRuby
+- win32
 
 ## Usage
 
-    require "http_parser"
+    require "http/parser"
 
-    parser = HTTP::Parser.new
+    parser = Http::Parser.new
 
-    parser.on_headers_complete = proc do |env|
-      # Rack formatted env hash
-      p env
+    parser.on_headers_complete = proc do |headers|
+      p parser.http_method
+      p parser.http_version
+
+      p parser.request_url # for requests
+      p parser.status_code # for responses
+
+      p headers
     end
 
     parser.on_body = proc do |chunk|
@@ -31,3 +42,4 @@ major Ruby platforms (JRuby, MRI 1.8 and 1.9, win32 and Rubinius).
 
     # Feed raw data from the socket to the parser
     parser << raw_data
+

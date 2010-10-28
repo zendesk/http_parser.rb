@@ -3,7 +3,7 @@ require 'rake/javaextensiontask'
 require "rspec/core/rake_task"
 
 def gemspec
-  @clean_gemspec ||= eval(File.read(File.expand_path('../ruby_http_parser.gemspec', __FILE__)))
+  @clean_gemspec ||= eval(File.read(File.expand_path('../http_parser.rb.gemspec', __FILE__)))
 end
 
 if RUBY_PLATFORM =~ /java/
@@ -23,11 +23,10 @@ else
 end
 
 file 'lib/ruby_http_parser.rb' do |t|
-  name = gemspec.name
   File.open(t.name, 'wb') do |f|
     f.write <<-eoruby
 RUBY_VERSION =~ /(\\d+.\\d+)/
-require "\#{$1}/#{name}"
+require "\#{$1}/ruby_http_parser"
     eoruby
   end
 end
