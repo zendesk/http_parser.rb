@@ -19,7 +19,7 @@ else
 
       # inject 1.8/1.9 pure-ruby entry point
       ext.cross_compiling do |spec|
-        spec.files << 'lib/ruby_http_parser.rb'
+        spec.files += ['lib/ruby_http_parser.rb']
       end
     end
   end
@@ -35,5 +35,5 @@ require "\#{$1}/ruby_http_parser"
 end
 
 if Rake::Task.task_defined?(:cross)
-  task :cross => "lib/ruby_http_parser.rb"
+  task :cross => 'lib/ruby_http_parser.rb'
 end
