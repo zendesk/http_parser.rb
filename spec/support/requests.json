@@ -341,7 +341,7 @@
   {
     "name": "connect request",
     "type": "HTTP_REQUEST",
-    "raw": "CONNECT home.netscape.com:443 HTTP/1.0\r\nUser-agent: Mozilla/1.1N\r\nProxy-authorization: basic aGVsbG86d29ybGQ=\r\n\r\n",
+    "raw": "CONNECT home0.netscape.com:443 HTTP/1.0\r\nUser-agent: Mozilla/1.1N\r\nProxy-authorization: basic aGVsbG86d29ybGQ=\r\n\r\n",
     "should_keep_alive": false,
     "message_complete_on_eof": false,
     "http_major": 1,
@@ -350,7 +350,7 @@
     "query_string": "",
     "fragment": "",
     "request_path": "",
-    "request_url": "home.netscape.com:443",
+    "request_url": "home0.netscape.com:443",
     "num_headers": 2,
     "upgrade": 1,
     "headers": {
@@ -372,6 +372,25 @@
     "fragment": "",
     "request_path": "/test",
     "request_url": "/test",
+    "num_headers": 0,
+    "headers": {
+
+    },
+    "body": ""
+  },
+  {
+    "name": "request with no http version",
+    "type": "HTTP_REQUEST",
+    "raw": "GET /\r\n\r\n",
+    "should_keep_alive": false,
+    "message_complete_on_eof": false,
+    "http_major": 0,
+    "http_minor": 9,
+    "method": "GET",
+    "query_string": "",
+    "fragment": "",
+    "request_path": "/",
+    "request_url": "/",
     "num_headers": 0,
     "headers": {
 
