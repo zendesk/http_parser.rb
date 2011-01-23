@@ -3,8 +3,8 @@ require 'mkmf'
 # check out code if it hasn't been already
 if Dir[File.expand_path('../vendor/http-parser/*', __FILE__)].empty?
   Dir.chdir(File.expand_path('../../../', __FILE__)) do
-    sh 'git submodule init'
-    sh 'git submodule update'
+    xsystem 'git submodule init'
+    xsystem 'git submodule update'
   end
 end
 
