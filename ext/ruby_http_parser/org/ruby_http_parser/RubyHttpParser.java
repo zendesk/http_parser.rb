@@ -120,7 +120,7 @@ public class RubyHttpParser extends RubyObject {
         if (_current_header == null)
           _current_header = new String(data);
         else
-          _current_header.concat(new String(data));
+          _current_header = _current_header.concat(new String(data));
 
         return 0;
       }

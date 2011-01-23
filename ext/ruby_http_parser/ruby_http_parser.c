@@ -32,8 +32,7 @@ typedef struct ParserWrapper {
   VALUE stopped;
 
   VALUE last_field_name;
-  const char *last_field_name_at;
-  size_t last_field_name_length;
+  VALUE curr_field_name;
 
   enum ryah_http_parser_type type;
 } ParserWrapper;
@@ -52,8 +51,7 @@ void ParserWrapper_init(ParserWrapper *wrapper) {
   wrapper->headers = Qnil;
 
   wrapper->last_field_name = Qnil;
-  wrapper->last_field_name_at = NULL;
-  wrapper->last_field_name_length = 0;
+  wrapper->curr_field_name = Qnil;
 }
 
 void ParserWrapper_mark(void *data) {
@@ -70,6 +68,7 @@ void ParserWrapper_mark(void *data) {
     rb_gc_mark_maybe(wrapper->on_message_complete);
     rb_gc_mark_maybe(wrapper->callback_object);
     rb_gc_mark_maybe(wrapper->last_field_name);
+    rb_gc_mark_maybe(wrapper->curr_field_name);
   }
 }
 
@@ -147,13 +146,11 @@ int on_fragment(ryah_http_parser *parser, const char *at, size_t length) {
 int on_header_field(ryah_http_parser *parser, const char *at, size_t length) {
   GET_WRAPPER(wrapper, parser);
 
-  wrapper->last_field_name = Qnil;
-
-  if (wrapper->last_field_name_at == NULL) {
-    wrapper->last_field_name_at = at;
-    wrapper->last_field_name_length = length;
+  if (wrapper->curr_field_name == Qnil) {
+    wrapper->last_field_name = Qnil;
+    wrapper->curr_field_name = rb_str_new(at, length);
   } else {
-    wrapper->last_field_name_length += length;
+    rb_str_cat(wrapper->curr_field_name, at, length);
   }
 
   return 0;
@@ -163,15 +160,13 @@ int on_header_value(ryah_http_parser *parser, const char *at, size_t length) {
   GET_WRAPPER(wrapper, parser);
 
   if (wrapper->last_field_name == Qnil) {
-    wrapper->last_field_name = rb_str_new(wrapper->last_field_name_at, wrapper->last_field_name_length);
+    wrapper->last_field_name = wrapper->curr_field_name;
+    wrapper->curr_field_name = Qnil;
 
     VALUE val = rb_hash_aref(wrapper->headers, wrapper->last_field_name);
     if (val != Qnil) {
       rb_str_cat(val, ", ", 2);
     }
-
-    wrapper->last_field_name_at = NULL;
-    wrapper->last_field_name_length = 0;
   }
 
   HASH_CAT(wrapper->headers, wrapper->last_field_name, at, length);

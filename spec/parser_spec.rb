@@ -115,6 +115,23 @@ describe HTTP::Parser do
     @done.should be_true
   end
 
+  it "should parse headers incrementally" do
+    request =
+      "GET / HTTP/1.0\r\n" +
+      "Header1: value 1\r\n" +
+      "Header2: value 2\r\n" +
+      "\r\n"
+
+    while chunk = request.slice!(0,2) and !chunk.empty?
+      @parser << chunk
+    end
+
+    @parser.headers.should == {
+      'Header1' => 'value 1',
+      'Header2' => 'value 2'
+    }
+  end
+
   it "should handle multiple headers" do
     @parser <<
       "GET / HTTP/1.0\r\n" +
