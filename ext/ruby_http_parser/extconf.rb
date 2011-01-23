@@ -1,5 +1,13 @@
 require 'mkmf'
 
+# check out code if it hasn't been already
+if Dir[File.expand_path('../vendor/http-parser/*', __FILE__)].empty?
+  Dir.chdir(File.expand_path('../../../', __FILE__)) do
+    sh 'git submodule init'
+    sh 'git submodule update'
+  end
+end
+
 # mongrel and http-parser both define http_parser_(init|execute), so we
 # rename functions in http-parser before using them.
 vendor_dir = File.expand_path('../vendor/http-parser/', __FILE__)
