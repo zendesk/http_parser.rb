@@ -290,6 +290,8 @@ VALUE Parser_initialize(int argc, VALUE *argv, VALUE self) {
 
 VALUE Parser_execute(VALUE self, VALUE data) {
   ParserWrapper *wrapper = NULL;
+
+  Check_Type(data, T_STRING);
   char *ptr = RSTRING_PTR(data);
   long len = RSTRING_LEN(data);
 
