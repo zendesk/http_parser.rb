@@ -30,6 +30,7 @@ typedef struct ParserWrapper {
 
   VALUE callback_object;
   VALUE stopped;
+  VALUE completed;
 
   VALUE last_field_name;
   VALUE curr_field_name;
@@ -49,6 +50,7 @@ void ParserWrapper_init(ParserWrapper *wrapper) {
   wrapper->fragment = Qnil;
 
   wrapper->headers = Qnil;
+  wrapper->completed = Qfalse;
 
   wrapper->last_field_name = Qnil;
   wrapper->curr_field_name = Qnil;
@@ -216,6 +218,7 @@ int on_message_complete(ryah_http_parser *parser) {
   GET_WRAPPER(wrapper, parser);
 
   VALUE ret = Qnil;
+  wrapper->completed = Qtrue;
 
   if (wrapper->callback_object != Qnil && rb_respond_to(wrapper->callback_object, Ion_message_complete)) {
     ret = rb_funcall(wrapper->callback_object, Ion_message_complete, 0);
@@ -298,7 +301,7 @@ VALUE Parser_execute(VALUE self, VALUE data) {
   if (wrapper->parser.upgrade) {
     // upgrade request
   } else if (nparsed != len) {
-    if (!RTEST(wrapper->stopped))
+    if (!RTEST(wrapper->stopped) && !RTEST(wrapper->completed))
       rb_raise(eParserError, "Could not parse data entirely");
     else
       nparsed += 1; // error states fail on the current character

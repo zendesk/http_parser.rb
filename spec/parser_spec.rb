@@ -160,6 +160,18 @@ describe HTTP::Parser do
     @done.should be_true
   end
 
+  it "should ignore extra content beyond specified length" do
+    @parser <<
+      "GET / HTTP/1.0\r\n" +
+      "Content-Length: 5\r\n" +
+      "\r\n" +
+      "hello" +
+      "  \n"
+
+    @body.should == 'hello'
+    @done.should be_true
+  end
+
   %w[ request response ].each do |type|
     JSON.parse(File.read(File.expand_path("../support/#{type}s.json", __FILE__))).each do |test|
       test['headers'] ||= {}
