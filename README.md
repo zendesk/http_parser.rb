@@ -20,14 +20,15 @@ This gem aims to work on all major Ruby platforms, including:
 
     parser = Http::Parser.new
 
-    parser.on_headers_complete = proc do |headers|
-      p parser.http_method
+    parser.on_headers_complete = proc do
       p parser.http_version
 
-      p parser.request_url # for requests
+      p parser.http_method # for requests
+      p parser.request_url
+
       p parser.status_code # for responses
 
-      p headers
+      p parser.headers
     end
 
     parser.on_body = proc do |chunk|
@@ -42,4 +43,43 @@ This gem aims to work on all major Ruby platforms, including:
 
     # Feed raw data from the socket to the parser
     parser << raw_data
+
+## Advanced Usage
+
+### Accept callbacks on an object
+
+    module MyHttpConnection
+      def connection_completed
+        @parser = Http::Parser.new(self)
+      end
+
+      def receive_data(data)
+        @parser << data
+      end
+
+      def on_message_begin
+        @headers = nil
+        @body = ''
+      end
+
+      def on_headers_complete
+        @headers = @parser.headers
+      end
+
+      def on_body(chunk)
+        @body << chunk
+      end
+
+      def on_message_complete
+        p [@headers, @body]
+      end
+    end
+
+### Stop parsing after headers
+
+    parser = Http::Parser.new
+    parser.on_headers_complete = proc{ :stop }
+
+    offset = parser << request_data
+    body = request_data[offset..-1]
 
