@@ -13,7 +13,7 @@ Gem::Specification.new do |s|
   s.require_paths = ["lib"]
   s.extensions    = ["ext/ruby_http_parser/extconf.rb"]
 
-  s.add_development_dependency 'rake-compiler', '>= 0.7.0'
+  s.add_development_dependency 'rake-compiler', '>= 0.7.5'
   s.add_development_dependency 'rspec', '>= 2.0.1'
   s.add_development_dependency 'json', '>= 1.4.6'
 end
