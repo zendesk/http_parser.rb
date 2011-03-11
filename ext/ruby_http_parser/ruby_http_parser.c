@@ -23,6 +23,8 @@ typedef struct ParserWrapper {
 
   VALUE headers;
 
+  VALUE upgrade_data;
+
   VALUE on_message_begin;
   VALUE on_headers_complete;
   VALUE on_body;
@@ -49,6 +51,8 @@ void ParserWrapper_init(ParserWrapper *wrapper) {
   wrapper->query_string = Qnil;
   wrapper->fragment = Qnil;
 
+  wrapper->upgrade_data = Qnil;
+
   wrapper->headers = Qnil;
   wrapper->completed = Qfalse;
 
@@ -63,6 +67,7 @@ void ParserWrapper_mark(void *data) {
     rb_gc_mark_maybe(wrapper->request_path);
     rb_gc_mark_maybe(wrapper->query_string);
     rb_gc_mark_maybe(wrapper->fragment);
+    rb_gc_mark_maybe(wrapper->upgrade_data);
     rb_gc_mark_maybe(wrapper->headers);
     rb_gc_mark_maybe(wrapper->on_message_begin);
     rb_gc_mark_maybe(wrapper->on_headers_complete);
@@ -104,6 +109,7 @@ int on_message_begin(ryah_http_parser *parser) {
   wrapper->query_string = rb_str_new2("");
   wrapper->fragment = rb_str_new2("");
   wrapper->headers = rb_hash_new();
+  wrapper->upgrade_data = rb_str_new2("");
 
   VALUE ret = Qnil;
 
@@ -299,7 +305,8 @@ VALUE Parser_execute(VALUE self, VALUE data) {
   size_t nparsed = ryah_http_parser_execute(&wrapper->parser, &settings, ptr, len);
 
   if (wrapper->parser.upgrade) {
-    // upgrade request
+    rb_str_cat(wrapper->upgrade_data, ptr + nparsed + 1, len - nparsed - 1);
+
   } else if (nparsed != len) {
     if (!RTEST(wrapper->stopped) && !RTEST(wrapper->completed))
       rb_raise(eParserError, "Could not parse data entirely");
@@ -418,6 +425,7 @@ DEFINE_GETTER(request_path);
 DEFINE_GETTER(query_string);
 DEFINE_GETTER(fragment);
 DEFINE_GETTER(headers);
+DEFINE_GETTER(upgrade_data);
 
 VALUE Parser_reset(VALUE self) {
   ParserWrapper *wrapper = NULL;
@@ -469,6 +477,7 @@ void Init_ruby_http_parser() {
   rb_define_method(cParser, "query_string", Parser_query_string, 0);
   rb_define_method(cParser, "fragment", Parser_fragment, 0);
   rb_define_method(cParser, "headers", Parser_headers, 0);
+  rb_define_method(cParser, "upgrade_data", Parser_upgrade_data, 0);
 
   rb_define_method(cParser, "reset!", Parser_reset, 0);
 }

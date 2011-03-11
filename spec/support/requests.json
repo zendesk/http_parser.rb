@@ -315,7 +315,7 @@
   {
     "name": "upgrade request",
     "type": "HTTP_REQUEST",
-    "raw": "GET /demo HTTP/1.1\r\nHost: example.com\r\nConnection: Upgrade\r\nSec-WebSocket-Key2: 12998 5 Y3 1  .P00\r\nSec-WebSocket-Protocol: sample\r\nUpgrade: WebSocket\r\nSec-WebSocket-Key1: 4 @1  46546xW%0l 1 5\r\nOrigin: http://example.com\r\n\r\n",
+    "raw": "GET /demo HTTP/1.1\r\nHost: example.com\r\nConnection: Upgrade\r\nSec-WebSocket-Key2: 12998 5 Y3 1  .P00\r\nSec-WebSocket-Protocol: sample\r\nUpgrade: WebSocket\r\nSec-WebSocket-Key1: 4 @1  46546xW%0l 1 5\r\nOrigin: http://example.com\r\n\r\nthird key data",
     "should_keep_alive": true,
     "message_complete_on_eof": false,
     "http_major": 1,
@@ -327,6 +327,7 @@
     "request_url": "/demo",
     "num_headers": 7,
     "upgrade": 1,
+    "upgrade_data": "third key data",
     "headers": {
       "Host": "example.com",
       "Connection": "Upgrade",
@@ -353,6 +354,7 @@
     "request_url": "home0.netscape.com:443",
     "num_headers": 2,
     "upgrade": 1,
+    "upgrade_data" : "",
     "headers": {
       "User-agent": "Mozilla/1.1N",
       "Proxy-authorization": "basic aGVsbG86d29ybGQ="

@@ -181,6 +181,7 @@ describe HTTP::Parser do
 
         @parser.keep_alive?.should == test['should_keep_alive']
         @parser.upgrade?.should == (test['upgrade']==1)
+        @parser.upgrade_data.should == test['upgrade_data'] if (test['upgrade']==1)
         @parser.http_method.should == test['method']
 
         fields = %w[
