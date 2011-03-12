@@ -1,8 +1,0 @@
-"git submodule init"
-Submodule 'ext/ruby_http_parser/vendor/http-parser' (git://github.com/ry/http-parser.git) registered for path 'ext/ruby_http_parser/vendor/http-parser'
-Submodule 'ext/ruby_http_parser/vendor/http-parser-java' (git://github.com/a2800276/http-parser.java.git) registered for path 'ext/ruby_http_parser/vendor/http-parser-java'
-"git submodule update"
-Cloning into ext/ruby_http_parser/vendor/http-parser...
-Submodule path 'ext/ruby_http_parser/vendor/http-parser': checked out 'fcdbc2629f9df0d84e427051a501d61731f36dd8'
-Cloning into ext/ruby_http_parser/vendor/http-parser-java...
-Submodule path 'ext/ruby_http_parser/vendor/http-parser-java': checked out 'e242866b8a6b34dc0e34453bee43e8eea9842f95'
