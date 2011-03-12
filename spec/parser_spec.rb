@@ -172,6 +172,27 @@ describe HTTP::Parser do
     @done.should be_true
   end
 
+  it 'sets upgrade_data if available' do
+    @parser <<
+      "GET /demo HTTP/1.1\r\n" +
+      "Connection: Upgrade\r\n" +
+      "Upgrade: WebSocket\r\n\r\n" +
+      "third key data"
+
+    @parser.upgrade?.should be_true
+    @parser.upgrade_data.should == 'third key data'
+  end
+
+  it 'sets upgrade_data to blank if un-available' do
+    @parser <<
+      "GET /demo HTTP/1.1\r\n" +
+      "Connection: Upgrade\r\n" +
+      "Upgrade: WebSocket\r\n\r\n"
+
+    @parser.upgrade?.should be_true
+    @parser.upgrade_data.should == ''
+  end
+
   %w[ request response ].each do |type|
     JSON.parse(File.read(File.expand_path("../support/#{type}s.json", __FILE__))).each do |test|
       test['headers'] ||= {}
@@ -181,7 +202,6 @@ describe HTTP::Parser do
 
         @parser.keep_alive?.should == test['should_keep_alive']
         @parser.upgrade?.should == (test['upgrade']==1)
-        @parser.upgrade_data.should == test['upgrade_data'] if (test['upgrade']==1)
         @parser.http_method.should == test['method']
 
         fields = %w[
