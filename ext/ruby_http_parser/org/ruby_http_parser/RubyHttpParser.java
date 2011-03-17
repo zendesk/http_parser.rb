@@ -61,6 +61,7 @@ public class RubyHttpParser extends RubyObject {
   private IRubyObject fragment;
 
   private IRubyObject header_value_type;
+  private IRubyObject upgradeData;
 
   private IRubyObject callback_object;
 
@@ -188,6 +189,8 @@ public class RubyHttpParser extends RubyObject {
         queryString = runtime.newString("");
         fragment = runtime.newString("");
 
+        upgradeData = runtime.newString("");
+
         IRubyObject ret = runtime.getNil();
 
         if (callback_object != null) {
@@ -281,6 +284,8 @@ public class RubyHttpParser extends RubyObject {
     this.requestPath = runtime.getNil();
     this.queryString = runtime.getNil();
     this.fragment = runtime.getNil();
+
+    this.upgradeData = runtime.getNil();
   }
 
   @JRubyMethod(name = "initialize")
@@ -339,7 +344,9 @@ public class RubyHttpParser extends RubyObject {
     }
 
     if (parser.getUpgrade()) {
-      // upgrade request
+      byte[] upData = fetchBytes(buf, buf.position(), buf.limit() - buf.position());
+      ((RubyString)upgradeData).concat(runtime.newString(new String(upData)));
+
     } else if (buf.hasRemaining()) {
       if (!stopped)
         throw new RaiseException(runtime, eParserError, "Could not parse data entirely", true);
@@ -438,7 +445,12 @@ public class RubyHttpParser extends RubyObject {
     header_value_type = val;
     return val;
   }
-  
+
+  @JRubyMethod(name = "upgrade_data")
+  public IRubyObject upgradeData() {
+    return upgradeData == null ? runtime.getNil() : upgradeData;
+  }
+
   @JRubyMethod(name = "reset!")
   public IRubyObject reset() {
     init();
