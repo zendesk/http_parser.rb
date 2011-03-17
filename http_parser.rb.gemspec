@@ -16,5 +16,10 @@ Gem::Specification.new do |s|
   s.add_development_dependency 'rake-compiler', '>= 0.7.6'
   s.add_development_dependency 'rspec', '>= 2.0.1'
   s.add_development_dependency 'json', '>= 1.4.6'
-  # s.add_development_dependency 'yajl-ruby', '>= 0.8.1'
+
+  if RUBY_PLATFORM =~ /java/
+    s.add_development_dependency 'jruby-openssl'
+  else
+    s.add_development_dependency 'yajl-ruby', '>= 0.8.1'
+  end
 end

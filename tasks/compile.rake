@@ -10,7 +10,9 @@ Rake::GemPackageTask.new(gemspec) do |pkg|
 end
 
 if RUBY_PLATFORM =~ /java/
-  Rake::JavaExtensionTask.new("ruby_http_parser", gemspec)
+  Rake::JavaExtensionTask.new("ruby_http_parser", gemspec) do |ext|
+    ext.classpath = File.expand_path('../../ext/ruby_http_parser/vendor/http-parser-java/ext/primitives.jar', __FILE__)
+  end
 else
   Rake::ExtensionTask.new("ruby_http_parser", gemspec) do |ext|
     unless RUBY_PLATFORM =~ /mswin|mingw/
