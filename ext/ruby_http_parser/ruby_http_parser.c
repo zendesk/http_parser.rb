@@ -12,12 +12,6 @@
       rb_hash_aset(h, k, rb_str_new(ptr, len)); \
     }                                           \
   } while(0)
-#define VALIDATE_HEADER_VALUE_TYPE(t)                                             \
-  do {                                                                            \
-    if (t != Sarrays && t != Sstrings && t != Smixed) {                           \
-      rb_raise(rb_eArgError, "Invalid header value type");                       \
-    }                                                                             \
-  } while(0)
 
 typedef struct ParserWrapper {
   ryah_http_parser parser;
@@ -209,9 +203,8 @@ int on_header_value(ryah_http_parser *parser, const char *at, size_t length) {
         rb_str_cat(current_value, ", ", 2);
       }
     }
+    current_value = rb_hash_aref(wrapper->headers, wrapper->last_field_name);
   }
-
-  current_value = rb_hash_aref(wrapper->headers, wrapper->last_field_name);
 
   if (TYPE(current_value) == T_ARRAY) {
     current_value = rb_ary_entry(current_value, -1);
@@ -326,7 +319,7 @@ VALUE Parser_initialize(int argc, VALUE *argv, VALUE self) {
   ParserWrapper *wrapper = NULL;
   DATA_GET(self, ParserWrapper, wrapper);
 
-  wrapper->header_value_type = rb_cv_get(CLASS_OF(self), "@@default_header_value_type");
+  wrapper->header_value_type = rb_iv_get(CLASS_OF(self), "@default_header_value_type");
 
   if (argc == 1) {
     wrapper->callback_object = argv[0];
@@ -476,20 +469,11 @@ DEFINE_GETTER(headers);
 DEFINE_GETTER(upgrade_data);
 DEFINE_GETTER(header_value_type);
 
-VALUE Parser_default_header_value_type(VALUE self) {
-  return rb_cv_get(CLASS_OF(self), "@@default_header_value_type");
-}
-
-VALUE Parser_set_default_header_value_type(VALUE self, VALUE val) {
-  VALIDATE_HEADER_VALUE_TYPE(val);
-
-  rb_cv_set(CLASS_OF(self), "@@default_header_value_type", val);
-  return Parser_default_header_value_type(self);
-}
-
 VALUE Parser_set_header_value_type(VALUE self, VALUE val) {
-  VALIDATE_HEADER_VALUE_TYPE(val);
-
+  if (val != Sarrays && val != Sstrings && val != Smixed) {
+    rb_raise(rb_eArgError, "Invalid header value type");
+  }
+  
   ParserWrapper *wrapper = NULL;
   DATA_GET(self, ParserWrapper, wrapper);
   wrapper->header_value_type = val;
@@ -527,10 +511,6 @@ void Init_ruby_http_parser() {
   rb_define_alloc_func(cRequestParser, RequestParser_alloc);
   rb_define_alloc_func(cResponseParser, ResponseParser_alloc);
 
-  rb_define_singleton_method(cParser, "default_header_value_type", Parser_default_header_value_type, 0);
-  rb_define_singleton_method(cParser, "default_header_value_type=", Parser_set_default_header_value_type, 1);
-  rb_define_class_variable(cParser, "@@default_header_value_type", Smixed);
-  
   rb_define_method(cParser, "initialize", Parser_initialize, -1);
 
   rb_define_method(cParser, "on_message_begin=", Parser_set_on_message_begin, 1);
