@@ -54,6 +54,10 @@ describe HTTP::Parser do
     proc{ @parser.header_value_type = 'bob' }.should raise_error(ArgumentError)
   end
   
+  it "should throw an Argument Error if default header value type is invalid" do
+    proc{ HTTP::Parser.default_header_value_type = 'bob' }.should raise_error(ArgumentError)
+  end
+  
   it "should implement basic api" do
     @parser <<
       "GET /test?ok=1 HTTP/1.1\r\n" +

@@ -10,7 +10,7 @@ module HTTP
 
       def default_header_value_type=(val)
         if (val != :mixed && val != :strings && val != :arrays)
-          throw(ArgumentError, "Invalid header value type")
+          raise ArgumentError, "Invalid header value type"
         end
         @default_header_value_type = val
       end
