@@ -1,4 +1,4 @@
-require 'rake/package_task'
+require 'rake/gempackagetask'
 require 'rake/extensiontask'
 require 'rake/javaextensiontask'
 
