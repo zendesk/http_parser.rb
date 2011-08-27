@@ -35,7 +35,7 @@ typedef struct ParserWrapper {
   VALUE completed;
 
   VALUE header_value_type;
-  
+
   VALUE last_field_name;
   VALUE curr_field_name;
 
@@ -473,7 +473,7 @@ VALUE Parser_set_header_value_type(VALUE self, VALUE val) {
   if (val != Sarrays && val != Sstrings && val != Smixed) {
     rb_raise(rb_eArgError, "Invalid header value type");
   }
-  
+
   ParserWrapper *wrapper = NULL;
   DATA_GET(self, ParserWrapper, wrapper);
   wrapper->header_value_type = val;
