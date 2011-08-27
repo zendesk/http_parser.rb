@@ -15,7 +15,7 @@ task :fixtures => :submodules do
     tmp.gsub!('FALSE', 'false')
 
     # remove macros and comments
-    tmp.gsub!(/^#define.+$/,'')
+    tmp.gsub!(/^#(if|elif|endif|define).+$/,'')
     tmp.gsub!(/\/\*(.+?)\*\/$/,'')
 
     # HTTP_* enums become strings
