@@ -348,7 +348,7 @@ VALUE Parser_execute(VALUE self, VALUE data) {
   if (wrapper->parser.upgrade) {
     rb_str_cat(wrapper->upgrade_data, ptr + nparsed + 1, len - nparsed - 1);
 
-  } else if (nparsed != len) {
+  } else if (nparsed != (size_t)len) {
     if (!RTEST(wrapper->stopped) && !RTEST(wrapper->completed))
       rb_raise(eParserError, "Could not parse data entirely");
     else
@@ -401,7 +401,7 @@ VALUE Parser_upgrade_p(VALUE self) {
   ParserWrapper *wrapper = NULL;
   DATA_GET(self, ParserWrapper, wrapper);
 
-  return wrapper->parser.upgrade == 1 ? Qtrue : Qfalse;
+  return wrapper->parser.upgrade ? Qtrue : Qfalse;
 }
 
 VALUE Parser_http_version(VALUE self) {
