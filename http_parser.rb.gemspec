@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = "http_parser.rb"
-  s.version = "0.5.2"
+  s.version = "0.5.3"
   s.summary = "Simple callback-based HTTP request/response parser"
   s.description = "Ruby bindings to http://github.com/ry/http-parser and http://github.com/a2800276/http-parser.java"
 
