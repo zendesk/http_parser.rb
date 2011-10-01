@@ -3,7 +3,7 @@
 A simple callback-based HTTP request/response parser for writing http
 servers, clients and proxies.
 
-This gem is built on top of [ry/http-parser](http://github.com/ry/http-parser) and its java port [a2800276/http-parser.java](http://github.com/a2800276/http-parser.java).
+This gem is built on top of [joyent/http-parser](http://github.com/joyent/http-parser) and its java port [a2800276/http-parser.java](http://github.com/a2800276/http-parser.java).
 
 ## Supported Platforms
 
