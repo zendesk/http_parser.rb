@@ -285,6 +285,10 @@ VALUE ResponseParser_alloc(VALUE klass) {
   return Parser_alloc_by_type(klass, HTTP_RESPONSE);
 }
 
+VALUE Parser_strict_p(VALUE klass) {
+  return HTTP_PARSER_STRICT == 1 ? Qtrue : Qfalse;
+}
+
 VALUE Parser_initialize(int argc, VALUE *argv, VALUE self) {
   ParserWrapper *wrapper = NULL;
   DATA_GET(self, ParserWrapper, wrapper);
@@ -479,6 +483,7 @@ void Init_ruby_http_parser() {
   rb_define_alloc_func(cRequestParser, RequestParser_alloc);
   rb_define_alloc_func(cResponseParser, ResponseParser_alloc);
 
+  rb_define_singleton_method(cParser, "strict?", Parser_strict_p, 0);
   rb_define_method(cParser, "initialize", Parser_initialize, -1);
 
   rb_define_method(cParser, "on_message_begin=", Parser_set_on_message_begin, 1);
