@@ -24,9 +24,6 @@ describe HTTP::Parser do
     @parser.status_code.should be_nil
 
     @parser.request_url.should be_nil
-    @parser.request_path.should be_nil
-    @parser.query_string.should be_nil
-    @parser.fragment.should be_nil
 
     @parser.header_value_type.should == :mixed
   end
@@ -78,9 +75,6 @@ describe HTTP::Parser do
     @parser.status_code.should be_nil
 
     @parser.request_url.should == '/test?ok=1'
-    @parser.request_path.should == '/test'
-    @parser.query_string.should == 'ok=1'
-    @parser.fragment.should be_empty
 
     @parser.headers.should == @headers
     @parser.headers['User-Agent'].should == 'curl/7.18.0'
@@ -119,9 +113,6 @@ describe HTTP::Parser do
     @parser.http_version.should == [1,0]
 
     @parser.request_url.should == '/'
-    @parser.request_path.should == '/'
-    @parser.query_string.should == ''
-    @parser.fragment.should == ''
 
     @parser.reset!.should be_true
 
@@ -130,9 +121,6 @@ describe HTTP::Parser do
     @parser.status_code.should be_nil
 
     @parser.request_url.should be_nil
-    @parser.request_path.should be_nil
-    @parser.query_string.should be_nil
-    @parser.fragment.should be_nil
   end
 
   it "should optionally reset parser state on no-body responses" do
@@ -301,9 +289,6 @@ describe HTTP::Parser do
         if test['type'] == 'HTTP_REQUEST'
           fields += %w[
             request_url
-            request_path
-            query_string
-            fragment
           ]
         else
           fields += %w[
