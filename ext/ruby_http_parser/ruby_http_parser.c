@@ -320,7 +320,7 @@ VALUE Parser_execute(VALUE self, VALUE data) {
 
   } else if (nparsed != (size_t)len) {
     if (!RTEST(wrapper->stopped) && !RTEST(wrapper->completed))
-      rb_raise(eParserError, "Could not parse data entirely");
+      rb_raise(eParserError, "Could not parse data entirely (%zu != %zu)", nparsed, len);
     else
       nparsed += 1; // error states fail on the current character
   }
