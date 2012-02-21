@@ -316,7 +316,7 @@ VALUE Parser_execute(VALUE self, VALUE data) {
   size_t nparsed = ryah_http_parser_execute(&wrapper->parser, &settings, ptr, len);
 
   if (wrapper->parser.upgrade) {
-    rb_str_cat(wrapper->upgrade_data, ptr + nparsed + 1, len - nparsed - 1);
+    rb_str_cat(wrapper->upgrade_data, ptr + nparsed, len - nparsed);
 
   } else if (nparsed != (size_t)len) {
     if (!RTEST(wrapper->stopped) && !RTEST(wrapper->completed))
