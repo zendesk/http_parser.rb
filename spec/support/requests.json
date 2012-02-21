@@ -18,7 +18,8 @@
       "Host": "0.0.0.0=5000",
       "Accept": "*/*"
     },
-    "body": ""
+    "body": "",
+    "strict": true
   },
   {
     "name": "firefox get",
@@ -44,7 +45,8 @@
       "Keep-Alive": "300",
       "Connection": "keep-alive"
     },
-    "body": ""
+    "body": "",
+    "strict": true
   },
   {
     "name": "dumbfuck",
@@ -63,7 +65,8 @@
     "headers": {
       "aaaaaaaaaaaaa": "++++++++++"
     },
-    "body": ""
+    "body": "",
+    "strict": true
   },
   {
     "name": "fragment in url",
@@ -79,7 +82,8 @@
     "request_path": "/forums/1/topics/2375",
     "request_url": "/forums/1/topics/2375?page=1#posts-17408",
     "num_headers": 0,
-    "body": ""
+    "body": "",
+    "strict": true
   },
   {
     "name": "get no headers no body",
@@ -95,7 +99,8 @@
     "request_path": "/get_no_headers_no_body/world",
     "request_url": "/get_no_headers_no_body/world",
     "num_headers": 0,
-    "body": ""
+    "body": "",
+    "strict": true
   },
   {
     "name": "get one header no body",
@@ -114,7 +119,8 @@
     "headers": {
       "Accept": "*/*"
     },
-    "body": ""
+    "body": "",
+    "strict": true
   },
   {
     "name": "get funky content length body hello",
@@ -133,7 +139,8 @@
     "headers": {
       "conTENT-Length": "5"
     },
-    "body": "HELLO"
+    "body": "HELLO",
+    "strict": true
   },
   {
     "name": "post identity body world",
@@ -154,7 +161,8 @@
       "Transfer-Encoding": "identity",
       "Content-Length": "5"
     },
-    "body": "World"
+    "body": "World",
+    "strict": true
   },
   {
     "name": "post - chunked body: all your base are belong to us",
@@ -173,7 +181,8 @@
     "headers": {
       "Transfer-Encoding": "chunked"
     },
-    "body": "all your base are belong to us"
+    "body": "all your base are belong to us",
+    "strict": true
   },
   {
     "name": "two chunks ; triple zero ending",
@@ -192,7 +201,8 @@
     "headers": {
       "Transfer-Encoding": "chunked"
     },
-    "body": "hello world"
+    "body": "hello world",
+    "strict": true
   },
   {
     "name": "chunked with trailing headers. blech.",
@@ -213,7 +223,8 @@
       "Vary": "*",
       "Content-Type": "text/plain"
     },
-    "body": "hello world"
+    "body": "hello world",
+    "strict": true
   },
   {
     "name": "with bullshit after the length",
@@ -232,7 +243,8 @@
     "headers": {
       "Transfer-Encoding": "chunked"
     },
-    "body": "hello world"
+    "body": "hello world",
+    "strict": true
   },
   {
     "name": "with quotes",
@@ -251,7 +263,8 @@
     "headers": {
 
     },
-    "body": ""
+    "body": "",
+    "strict": true
   },
   {
     "name": "apachebench get",
@@ -272,7 +285,8 @@
       "User-Agent": "ApacheBench/2.3",
       "Accept": "*/*"
     },
-    "body": ""
+    "body": "",
+    "strict": true
   },
   {
     "name": "query url with question mark",
@@ -291,7 +305,8 @@
     "headers": {
 
     },
-    "body": ""
+    "body": "",
+    "strict": true
   },
   {
     "name": "newline prefix get",
@@ -310,7 +325,8 @@
     "headers": {
 
     },
-    "body": ""
+    "body": "",
+    "strict": true
   },
   {
     "name": "upgrade request",
@@ -336,7 +352,8 @@
       "Sec-WebSocket-Key1": "4 @1  46546xW%0l 1 5",
       "Origin": "http://example.com"
     },
-    "body": ""
+    "body": "",
+    "strict": true
   },
   {
     "name": "connect request",
@@ -357,7 +374,8 @@
       "User-agent": "Mozilla/1.1N",
       "Proxy-authorization": "basic aGVsbG86d29ybGQ="
     },
-    "body": ""
+    "body": "",
+    "strict": true
   },
   {
     "name": "report request",
@@ -376,7 +394,8 @@
     "headers": {
 
     },
-    "body": ""
+    "body": "",
+    "strict": true
   },
   {
     "name": "request with no http version",
@@ -395,7 +414,8 @@
     "headers": {
 
     },
-    "body": ""
+    "body": "",
+    "strict": true
   },
   {
     "name": "m-search request",
@@ -416,7 +436,8 @@
       "MAN": "\"ssdp:discover\"",
       "ST": "\"ssdp:all\""
     },
-    "body": ""
+    "body": "",
+    "strict": true
   },
   {
     "name": "line folding in header value",
@@ -436,7 +457,8 @@
       "Line1": "abcdefghijklmno qrs",
       "Line2": "line2\t"
     },
-    "body": ""
+    "body": "",
+    "strict": true
   },
   {
     "name": "host terminated by a query string",
@@ -455,7 +477,8 @@
     "headers": {
 
     },
-    "body": ""
+    "body": "",
+    "strict": true
   },
   {
     "name": "host:port terminated by a query string",
@@ -475,7 +498,8 @@
     "headers": {
 
     },
-    "body": ""
+    "body": "",
+    "strict": true
   },
   {
     "name": "host:port terminated by a space",
@@ -495,7 +519,8 @@
     "headers": {
 
     },
-    "body": ""
+    "body": "",
+    "strict": true
   },
   {
     "name": "PATCH request",
@@ -517,7 +542,8 @@
       "If-Match": "\"e0023aa4e\"",
       "Content-Length": "10"
     },
-    "body": "cccccccccc"
+    "body": "cccccccccc",
+    "strict": true
   },
   {
     "name": "connect caps request",
@@ -538,11 +564,13 @@
       "User-agent": "Mozilla/1.1N",
       "Proxy-authorization": "basic aGVsbG86d29ybGQ="
     },
-    "body": ""
+    "body": "",
+    "strict": true
   },
   {
     "name": "utf-8 path request",
     "type": "HTTP_REQUEST",
+    "strict": false,
     "raw": "GET /δ¶/δt/pope?q=1#narf HTTP/1.1\r\nHost: github.com\r\n\r\n",
     "should_keep_alive": true,
     "message_complete_on_eof": false,
@@ -562,6 +590,7 @@
   {
     "name": "hostname underscore",
     "type": "HTTP_REQUEST",
+    "strict": false,
     "raw": "CONNECT home_0.netscape.com:443 HTTP/1.0\r\nUser-agent: Mozilla/1.1N\r\nProxy-authorization: basic aGVsbG86d29ybGQ=\r\n\r\n",
     "should_keep_alive": false,
     "message_complete_on_eof": false,
@@ -577,68 +606,6 @@
     "headers": {
       "User-agent": "Mozilla/1.1N",
       "Proxy-authorization": "basic aGVsbG86d29ybGQ="
-    },
-    "body": ""
-  },
-  {
-    "name": "eat CRLF between requests, no \"Connection: close\" header",
-    "raw": "POST / HTTP/1.1\r\nHost: www.example.com\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length: 4\r\n\r\nq=42\r\n",
-    "should_keep_alive": true,
-    "message_complete_on_eof": false,
-    "http_major": 1,
-    "http_minor": 1,
-    "method": "POST",
-    "query_string": "",
-    "fragment": "",
-    "request_path": "/",
-    "request_url": "/",
-    "num_headers": 3,
-    "upgrade": 0,
-    "headers": {
-      "Host": "www.example.com",
-      "Content-Type": "application/x-www-form-urlencoded",
-      "Content-Length": "4"
-    },
-    "body": "q=42"
-  },
-  {
-    "name": "eat CRLF between requests even if \"Connection: close\" is set",
-    "raw": "POST / HTTP/1.1\r\nHost: www.example.com\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length: 4\r\nConnection: close\r\n\r\nq=42\r\n",
-    "should_keep_alive": false,
-    "message_complete_on_eof": false,
-    "http_major": 1,
-    "http_minor": 1,
-    "method": "POST",
-    "query_string": "",
-    "fragment": "",
-    "request_path": "/",
-    "request_url": "/",
-    "num_headers": 4,
-    "upgrade": 0,
-    "headers": {
-      "Host": "www.example.com",
-      "Content-Type": "application/x-www-form-urlencoded",
-      "Content-Length": "4",
-      "Connection": "close"
-    },
-    "body": "q=42"
-  },
-  {
-    "name": "PURGE request",
-    "type": "HTTP_REQUEST",
-    "raw": "PURGE /file.txt HTTP/1.1\r\nHost: www.example.com\r\n\r\n",
-    "should_keep_alive": true,
-    "message_complete_on_eof": false,
-    "http_major": 1,
-    "http_minor": 1,
-    "method": "PURGE",
-    "query_string": "",
-    "fragment": "",
-    "request_path": "/file.txt",
-    "request_url": "/file.txt",
-    "num_headers": 1,
-    "headers": {
-      "Host": "www.example.com"
     },
     "body": ""
   }
