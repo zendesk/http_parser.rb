@@ -405,7 +405,7 @@
     "message_complete_on_eof": false,
     "http_major": 1,
     "http_minor": 1,
-    "method": "MSEARCH",
+    "method": "M-SEARCH",
     "query_string": "",
     "fragment": "",
     "request_path": "*",

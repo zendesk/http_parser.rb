@@ -20,7 +20,7 @@ task :fixtures => :submodules do
 
     # HTTP_* enums become strings
     tmp.gsub!(/(= )(HTTP_\w+)/){
-      "#{$1}#{$2.dump}"
+      "#{$1}#{$2.sub('MSEARCH','M-SEARCH').dump}"
     }
 
     # join multiline strings for body and raw data
