@@ -44,8 +44,8 @@
     "name": "404 no headers no body",
     "type": "HTTP_RESPONSE",
     "raw": "HTTP/1.1 404 Not Found\r\n\r\n",
-    "should_keep_alive": true,
-    "message_complete_on_eof": false,
+    "should_keep_alive": false,
+    "message_complete_on_eof": true,
     "http_major": 1,
     "http_minor": 1,
     "status_code": 404,
@@ -60,8 +60,8 @@
     "name": "301 no response phrase",
     "type": "HTTP_RESPONSE",
     "raw": "HTTP/1.1 301\r\n\r\n",
-    "should_keep_alive": true,
-    "message_complete_on_eof": false,
+    "should_keep_alive": false,
+    "message_complete_on_eof": true,
     "http_major": 1,
     "http_minor": 1,
     "status_code": 301,
@@ -164,27 +164,6 @@
     "body": ""
   },
   {
-    "name": "field space",
-    "type": "HTTP_RESPONSE",
-    "raw": "HTTP/1.1 200 OK\r\nServer: Microsoft-IIS/6.0\r\nX-Powered-By: ASP.NET\r\nen-US Content-Type: text/xml\r\nContent-Type: text/xml\r\nContent-Length: 16\r\nDate: Fri, 23 Jul 2010 18:45:38 GMT\r\nConnection: keep-alive\r\n\r\n<xml>hello</xml>",
-    "should_keep_alive": true,
-    "message_complete_on_eof": false,
-    "http_major": 1,
-    "http_minor": 1,
-    "status_code": 200,
-    "num_headers": 7,
-    "headers": {
-      "Server": "Microsoft-IIS/6.0",
-      "X-Powered-By": "ASP.NET",
-      "en-US Content-Type": "text/xml",
-      "Content-Type": "text/xml",
-      "Content-Length": "16",
-      "Date": "Fri, 23 Jul 2010 18:45:38 GMT",
-      "Connection": "keep-alive"
-    },
-    "body": "<xml>hello</xml>"
-  },
-  {
     "name": "field underscore",
     "type": "HTTP_RESPONSE",
     "raw": "HTTP/1.1 200 OK\r\nDate: Tue, 28 Sep 2010 01:14:13 GMT\r\nServer: Apache\r\nCache-Control: no-cache, must-revalidate\r\nExpires: Mon, 26 Jul 1997 05:00:00 GMT\r\n.et-Cookie: PlaxoCS=1274804622353690521; path=/; domain=.plaxo.com\r\nVary: Accept-Encoding\r\n_eep-Alive: timeout=45\r\n_onnection: Keep-Alive\r\nTransfer-Encoding: chunked\r\nContent-Type: text/html\r\nConnection: close\r\n\r\n0\r\n\r\n",
@@ -225,5 +204,152 @@
       "Connection": "close"
     },
     "body": ""
+  },
+  {
+    "name": "http version 0.9",
+    "type": "HTTP_RESPONSE",
+    "raw": "HTTP/0.9 200 OK\r\n\r\n",
+    "should_keep_alive": false,
+    "message_complete_on_eof": true,
+    "http_major": 0,
+    "http_minor": 9,
+    "status_code": 200,
+    "num_headers": 0,
+    "headers": {
+
+    },
+    "body": ""
+  },
+  {
+    "name": "neither content-length nor transfer-encoding response",
+    "type": "HTTP_RESPONSE",
+    "raw": "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nhello world",
+    "should_keep_alive": false,
+    "message_complete_on_eof": true,
+    "http_major": 1,
+    "http_minor": 1,
+    "status_code": 200,
+    "num_headers": 1,
+    "headers": {
+      "Content-Type": "text/plain"
+    },
+    "body": "hello world"
+  },
+  {
+    "name": "HTTP/1.0 with keep-alive and EOF-terminated 200 status",
+    "type": "HTTP_RESPONSE",
+    "raw": "HTTP/1.0 200 OK\r\nConnection: keep-alive\r\n\r\n",
+    "should_keep_alive": false,
+    "message_complete_on_eof": true,
+    "http_major": 1,
+    "http_minor": 0,
+    "status_code": 200,
+    "num_headers": 1,
+    "headers": {
+      "Connection": "keep-alive"
+    },
+    "body_size": 0,
+    "body": ""
+  },
+  {
+    "name": "HTTP/1.0 with keep-alive and a 204 status",
+    "type": "HTTP_RESPONSE",
+    "raw": "HTTP/1.0 204 No content\r\nConnection: keep-alive\r\n\r\n",
+    "should_keep_alive": true,
+    "message_complete_on_eof": false,
+    "http_major": 1,
+    "http_minor": 0,
+    "status_code": 204,
+    "num_headers": 1,
+    "headers": {
+      "Connection": "keep-alive"
+    },
+    "body_size": 0,
+    "body": ""
+  },
+  {
+    "name": "HTTP/1.1 with an EOF-terminated 200 status",
+    "type": "HTTP_RESPONSE",
+    "raw": "HTTP/1.1 200 OK\r\n\r\n",
+    "should_keep_alive": false,
+    "message_complete_on_eof": true,
+    "http_major": 1,
+    "http_minor": 1,
+    "status_code": 200,
+    "num_headers": 0,
+    "headers": {
+
+    },
+    "body_size": 0,
+    "body": ""
+  },
+  {
+    "name": "HTTP/1.1 with a 204 status",
+    "type": "HTTP_RESPONSE",
+    "raw": "HTTP/1.1 204 No content\r\n\r\n",
+    "should_keep_alive": true,
+    "message_complete_on_eof": false,
+    "http_major": 1,
+    "http_minor": 1,
+    "status_code": 204,
+    "num_headers": 0,
+    "headers": {
+
+    },
+    "body_size": 0,
+    "body": ""
+  },
+  {
+    "name": "HTTP/1.1 with a 204 status and keep-alive disabled",
+    "type": "HTTP_RESPONSE",
+    "raw": "HTTP/1.1 204 No content\r\nConnection: close\r\n\r\n",
+    "should_keep_alive": false,
+    "message_complete_on_eof": false,
+    "http_major": 1,
+    "http_minor": 1,
+    "status_code": 204,
+    "num_headers": 1,
+    "headers": {
+      "Connection": "close"
+    },
+    "body_size": 0,
+    "body": ""
+  },
+  {
+    "name": "HTTP/1.1 with chunked endocing and a 200 response",
+    "type": "HTTP_RESPONSE",
+    "raw": "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n0\r\n\r\n",
+    "should_keep_alive": true,
+    "message_complete_on_eof": false,
+    "http_major": 1,
+    "http_minor": 1,
+    "status_code": 200,
+    "num_headers": 1,
+    "headers": {
+      "Transfer-Encoding": "chunked"
+    },
+    "body_size": 0,
+    "body": ""
+  },
+  {
+    "name": "field space",
+    "type": "HTTP_RESPONSE",
+    "raw": "HTTP/1.1 200 OK\r\nServer: Microsoft-IIS/6.0\r\nX-Powered-By: ASP.NET\r\nen-US Content-Type: text/xml\r\nContent-Type: text/xml\r\nContent-Length: 16\r\nDate: Fri, 23 Jul 2010 18:45:38 GMT\r\nConnection: keep-alive\r\n\r\n<xml>hello</xml>",
+    "should_keep_alive": true,
+    "message_complete_on_eof": false,
+    "http_major": 1,
+    "http_minor": 1,
+    "status_code": 200,
+    "num_headers": 7,
+    "headers": {
+      "Server": "Microsoft-IIS/6.0",
+      "X-Powered-By": "ASP.NET",
+      "en-US Content-Type": "text/xml",
+      "Content-Type": "text/xml",
+      "Content-Length": "16",
+      "Date": "Fri, 23 Jul 2010 18:45:38 GMT",
+      "Connection": "keep-alive"
+    },
+    "body": "<xml>hello</xml>"
   }
 ]

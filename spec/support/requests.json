@@ -315,7 +315,7 @@
   {
     "name": "upgrade request",
     "type": "HTTP_REQUEST",
-    "raw": "GET /demo HTTP/1.1\r\nHost: example.com\r\nConnection: Upgrade\r\nSec-WebSocket-Key2: 12998 5 Y3 1  .P00\r\nSec-WebSocket-Protocol: sample\r\nUpgrade: WebSocket\r\nSec-WebSocket-Key1: 4 @1  46546xW%0l 1 5\r\nOrigin: http://example.com\r\n\r\n",
+    "raw": "GET /demo HTTP/1.1\r\nHost: example.com\r\nConnection: Upgrade\r\nSec-WebSocket-Key2: 12998 5 Y3 1  .P00\r\nSec-WebSocket-Protocol: sample\r\nUpgrade: WebSocket\r\nSec-WebSocket-Key1: 4 @1  46546xW%0l 1 5\r\nOrigin: http://example.com\r\n\r\nHot diggity dogg",
     "should_keep_alive": true,
     "message_complete_on_eof": false,
     "http_major": 1,
@@ -326,7 +326,7 @@
     "request_path": "/demo",
     "request_url": "/demo",
     "num_headers": 7,
-    "upgrade": 1,
+    "upgrade": "Hot diggity dogg",
     "headers": {
       "Host": "example.com",
       "Connection": "Upgrade",
@@ -341,7 +341,7 @@
   {
     "name": "connect request",
     "type": "HTTP_REQUEST",
-    "raw": "CONNECT home0.netscape.com:443 HTTP/1.0\r\nUser-agent: Mozilla/1.1N\r\nProxy-authorization: basic aGVsbG86d29ybGQ=\r\n\r\n",
+    "raw": "CONNECT 0-home0.netscape.com:443 HTTP/1.0\r\nUser-agent: Mozilla/1.1N\r\nProxy-authorization: basic aGVsbG86d29ybGQ=\r\n\r\nsome data\r\nand yet even more data",
     "should_keep_alive": false,
     "message_complete_on_eof": false,
     "http_major": 1,
@@ -350,9 +350,9 @@
     "query_string": "",
     "fragment": "",
     "request_path": "",
-    "request_url": "home0.netscape.com:443",
+    "request_url": "0-home0.netscape.com:443",
     "num_headers": 2,
-    "upgrade": 1,
+    "upgrade": "some data\r\nand yet even more data",
     "headers": {
       "User-agent": "Mozilla/1.1N",
       "Proxy-authorization": "basic aGVsbG86d29ybGQ="
@@ -394,6 +394,251 @@
     "num_headers": 0,
     "headers": {
 
+    },
+    "body": ""
+  },
+  {
+    "name": "m-search request",
+    "type": "HTTP_REQUEST",
+    "raw": "M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:1900\r\nMAN: \"ssdp:discover\"\r\nST: \"ssdp:all\"\r\n\r\n",
+    "should_keep_alive": true,
+    "message_complete_on_eof": false,
+    "http_major": 1,
+    "http_minor": 1,
+    "method": "MSEARCH",
+    "query_string": "",
+    "fragment": "",
+    "request_path": "*",
+    "request_url": "*",
+    "num_headers": 3,
+    "headers": {
+      "HOST": "239.255.255.250:1900",
+      "MAN": "\"ssdp:discover\"",
+      "ST": "\"ssdp:all\""
+    },
+    "body": ""
+  },
+  {
+    "name": "line folding in header value",
+    "type": "HTTP_REQUEST",
+    "raw": "GET / HTTP/1.1\r\nLine1:   abc\r\n\tdef\r\n ghi\r\n\t\tjkl\r\n  mno \r\n\t \tqrs\r\nLine2: \t line2\t\r\n\r\n",
+    "should_keep_alive": true,
+    "message_complete_on_eof": false,
+    "http_major": 1,
+    "http_minor": 1,
+    "method": "GET",
+    "query_string": "",
+    "fragment": "",
+    "request_path": "/",
+    "request_url": "/",
+    "num_headers": 2,
+    "headers": {
+      "Line1": "abcdefghijklmno qrs",
+      "Line2": "line2\t"
+    },
+    "body": ""
+  },
+  {
+    "name": "host terminated by a query string",
+    "type": "HTTP_REQUEST",
+    "raw": "GET http://hypnotoad.org?hail=all HTTP/1.1\r\n\r\n",
+    "should_keep_alive": true,
+    "message_complete_on_eof": false,
+    "http_major": 1,
+    "http_minor": 1,
+    "method": "GET",
+    "query_string": "hail=all",
+    "fragment": "",
+    "request_path": "",
+    "request_url": "http://hypnotoad.org?hail=all",
+    "num_headers": 0,
+    "headers": {
+
+    },
+    "body": ""
+  },
+  {
+    "name": "host:port terminated by a query string",
+    "type": "HTTP_REQUEST",
+    "raw": "GET http://hypnotoad.org:1234?hail=all HTTP/1.1\r\n\r\n",
+    "should_keep_alive": true,
+    "message_complete_on_eof": false,
+    "http_major": 1,
+    "http_minor": 1,
+    "method": "GET",
+    "query_string": "hail=all",
+    "fragment": "",
+    "request_path": "",
+    "request_url": "http://hypnotoad.org:1234?hail=all",
+    "port": 1234,
+    "num_headers": 0,
+    "headers": {
+
+    },
+    "body": ""
+  },
+  {
+    "name": "host:port terminated by a space",
+    "type": "HTTP_REQUEST",
+    "raw": "GET http://hypnotoad.org:1234 HTTP/1.1\r\n\r\n",
+    "should_keep_alive": true,
+    "message_complete_on_eof": false,
+    "http_major": 1,
+    "http_minor": 1,
+    "method": "GET",
+    "query_string": "",
+    "fragment": "",
+    "request_path": "",
+    "request_url": "http://hypnotoad.org:1234",
+    "port": 1234,
+    "num_headers": 0,
+    "headers": {
+
+    },
+    "body": ""
+  },
+  {
+    "name": "PATCH request",
+    "type": "HTTP_REQUEST",
+    "raw": "PATCH /file.txt HTTP/1.1\r\nHost: www.example.com\r\nContent-Type: application/example\r\nIf-Match: \"e0023aa4e\"\r\nContent-Length: 10\r\n\r\ncccccccccc",
+    "should_keep_alive": true,
+    "message_complete_on_eof": false,
+    "http_major": 1,
+    "http_minor": 1,
+    "method": "PATCH",
+    "query_string": "",
+    "fragment": "",
+    "request_path": "/file.txt",
+    "request_url": "/file.txt",
+    "num_headers": 4,
+    "headers": {
+      "Host": "www.example.com",
+      "Content-Type": "application/example",
+      "If-Match": "\"e0023aa4e\"",
+      "Content-Length": "10"
+    },
+    "body": "cccccccccc"
+  },
+  {
+    "name": "connect caps request",
+    "type": "HTTP_REQUEST",
+    "raw": "CONNECT HOME0.NETSCAPE.COM:443 HTTP/1.0\r\nUser-agent: Mozilla/1.1N\r\nProxy-authorization: basic aGVsbG86d29ybGQ=\r\n\r\n",
+    "should_keep_alive": false,
+    "message_complete_on_eof": false,
+    "http_major": 1,
+    "http_minor": 0,
+    "method": "CONNECT",
+    "query_string": "",
+    "fragment": "",
+    "request_path": "",
+    "request_url": "HOME0.NETSCAPE.COM:443",
+    "num_headers": 2,
+    "upgrade": "",
+    "headers": {
+      "User-agent": "Mozilla/1.1N",
+      "Proxy-authorization": "basic aGVsbG86d29ybGQ="
+    },
+    "body": ""
+  },
+  {
+    "name": "utf-8 path request",
+    "type": "HTTP_REQUEST",
+    "raw": "GET /δ¶/δt/pope?q=1#narf HTTP/1.1\r\nHost: github.com\r\n\r\n",
+    "should_keep_alive": true,
+    "message_complete_on_eof": false,
+    "http_major": 1,
+    "http_minor": 1,
+    "method": "GET",
+    "query_string": "q=1",
+    "fragment": "narf",
+    "request_path": "/δ¶/δt/pope",
+    "request_url": "/δ¶/δt/pope?q=1#narf",
+    "num_headers": 1,
+    "headers": {
+      "Host": "github.com"
+    },
+    "body": ""
+  },
+  {
+    "name": "hostname underscore",
+    "type": "HTTP_REQUEST",
+    "raw": "CONNECT home_0.netscape.com:443 HTTP/1.0\r\nUser-agent: Mozilla/1.1N\r\nProxy-authorization: basic aGVsbG86d29ybGQ=\r\n\r\n",
+    "should_keep_alive": false,
+    "message_complete_on_eof": false,
+    "http_major": 1,
+    "http_minor": 0,
+    "method": "CONNECT",
+    "query_string": "",
+    "fragment": "",
+    "request_path": "",
+    "request_url": "home_0.netscape.com:443",
+    "num_headers": 2,
+    "upgrade": "",
+    "headers": {
+      "User-agent": "Mozilla/1.1N",
+      "Proxy-authorization": "basic aGVsbG86d29ybGQ="
+    },
+    "body": ""
+  },
+  {
+    "name": "eat CRLF between requests, no \"Connection: close\" header",
+    "raw": "POST / HTTP/1.1\r\nHost: www.example.com\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length: 4\r\n\r\nq=42\r\n",
+    "should_keep_alive": true,
+    "message_complete_on_eof": false,
+    "http_major": 1,
+    "http_minor": 1,
+    "method": "POST",
+    "query_string": "",
+    "fragment": "",
+    "request_path": "/",
+    "request_url": "/",
+    "num_headers": 3,
+    "upgrade": 0,
+    "headers": {
+      "Host": "www.example.com",
+      "Content-Type": "application/x-www-form-urlencoded",
+      "Content-Length": "4"
+    },
+    "body": "q=42"
+  },
+  {
+    "name": "eat CRLF between requests even if \"Connection: close\" is set",
+    "raw": "POST / HTTP/1.1\r\nHost: www.example.com\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length: 4\r\nConnection: close\r\n\r\nq=42\r\n",
+    "should_keep_alive": false,
+    "message_complete_on_eof": false,
+    "http_major": 1,
+    "http_minor": 1,
+    "method": "POST",
+    "query_string": "",
+    "fragment": "",
+    "request_path": "/",
+    "request_url": "/",
+    "num_headers": 4,
+    "upgrade": 0,
+    "headers": {
+      "Host": "www.example.com",
+      "Content-Type": "application/x-www-form-urlencoded",
+      "Content-Length": "4",
+      "Connection": "close"
+    },
+    "body": "q=42"
+  },
+  {
+    "name": "PURGE request",
+    "type": "HTTP_REQUEST",
+    "raw": "PURGE /file.txt HTTP/1.1\r\nHost: www.example.com\r\n\r\n",
+    "should_keep_alive": true,
+    "message_complete_on_eof": false,
+    "http_major": 1,
+    "http_minor": 1,
+    "method": "PURGE",
+    "query_string": "",
+    "fragment": "",
+    "request_path": "/file.txt",
+    "request_url": "/file.txt",
+    "num_headers": 1,
+    "headers": {
+      "Host": "www.example.com"
     },
     "body": ""
   }
