@@ -29,6 +29,11 @@ import http_parser.lolevel.HTTPDataCallback;
 
 public class RubyHttpParser extends RubyObject {
 
+  @JRubyMethod(name = "strict?", module = true)
+  public static IRubyObject strict(IRubyObject recv) {
+    return recv.getRuntime().newBoolean(true);
+  }
+
   public static ObjectAllocator ALLOCATOR = new ObjectAllocator() {
     public IRubyObject allocate(Ruby runtime, RubyClass klass) {
       return new RubyHttpParser(runtime, klass);
