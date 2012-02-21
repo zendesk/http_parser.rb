@@ -278,9 +278,13 @@ describe HTTP::Parser do
       it "should parse #{type}: #{test['name']}" do
         @parser << test['raw']
 
-        @parser.keep_alive?.should == test['should_keep_alive']
-        @parser.upgrade?.should == (test['upgrade']==1)
         @parser.http_method.should == test['method']
+        @parser.keep_alive?.should == test['should_keep_alive']
+
+        if test.has_key?('upgrade') and test['upgrade'] != 0
+          @parser.upgrade?.should be_true
+          @parser.upgrade_data.should == test['upgrade']
+        end
 
         fields = %w[
           http_major
