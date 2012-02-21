@@ -270,6 +270,24 @@ describe HTTP::Parser do
     @parser.upgrade_data.should == ''
   end
 
+  it "should execute on_body on requests with no content-length" do
+   @parser.reset!.should be_true
+
+   @head, @complete, @body = 0, 0, 0
+   @parser.on_headers_complete = proc {|h| @head += 1 }
+   @parser.on_message_complete = proc { @complete += 1 }
+   @parser.on_body = proc {|b| @body += 1 }
+
+   head_response = "HTTP/1.1 200 OK\r\n\r\nstuff"
+
+   @parser << head_response
+   @parser << ''
+   @head.should == 1
+   @complete.should == 1
+   @body.should == 1
+  end
+
+
   %w[ request response ].each do |type|
     JSON.parse(File.read(File.expand_path("../support/#{type}s.json", __FILE__))).each do |test|
       test['headers'] ||= {}
