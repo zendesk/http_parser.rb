@@ -270,6 +270,20 @@ describe HTTP::Parser do
     @parser.upgrade_data.should == ''
   end
 
+  it 'should stop parsing headers when instructed' do
+    request = "GET /websocket HTTP/1.1\r\n" +
+      "host: localhost\r\n" +
+      "connection: Upgrade\r\n" +
+      "upgrade: websocket\r\n" +
+      "sec-websocket-key: SD6/hpYbKjQ6Sown7pBbWQ==\r\n" +
+      "sec-websocket-version: 13\r\n" +
+      "\r\n"
+
+    @parser.on_headers_complete = proc { |e| :stop }
+    offset = (@parser << request)
+    offset.should == request.length
+  end
+
   it "should execute on_body on requests with no content-length" do
    @parser.reset!.should be_true
 
