@@ -281,6 +281,8 @@ describe HTTP::Parser do
 
     @parser.on_headers_complete = proc { |e| :stop }
     offset = (@parser << request)
+    @parser.upgrade?.should be_true
+    @parser.upgrade_data.should == ''
     offset.should == request.length
   end
 
