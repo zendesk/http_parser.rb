@@ -107,27 +107,6 @@ public class RubyHttpParser extends RubyObject {
         return 0;
       }
     };
-    this.settings.on_path = new HTTPDataCallback() {
-      public int cb (http_parser.lolevel.HTTPParser p, ByteBuffer buf, int pos, int len) {
-        byte[] data = fetchBytes(buf, pos, len);
-        ((RubyString)requestPath).cat(data);
-        return 0;
-      }
-    };
-    this.settings.on_query_string = new HTTPDataCallback() {
-      public int cb (http_parser.lolevel.HTTPParser p, ByteBuffer buf, int pos, int len) {
-        byte[] data = fetchBytes(buf, pos, len);
-        ((RubyString)queryString).cat(data);
-        return 0;
-      }
-    };
-    this.settings.on_fragment = new HTTPDataCallback() {
-      public int cb (http_parser.lolevel.HTTPParser p, ByteBuffer buf, int pos, int len) {
-        byte[] data = fetchBytes(buf, pos, len);
-        ((RubyString)fragment).cat(data);
-        return 0;
-      }
-    };
 
     this.settings.on_header_field = new HTTPDataCallback() {
       public int cb (http_parser.lolevel.HTTPParser p, ByteBuffer buf, int pos, int len) {
