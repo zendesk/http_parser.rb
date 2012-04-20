@@ -278,6 +278,7 @@ public class RubyHttpParser extends RubyObject {
 
   private void init() {
     this.parser = new HTTPParser();
+    this.parser.HTTP_PARSER_STRICT = true;
     this.headers = null;
 
     this.requestUrl = runtime.getNil();
