@@ -25,6 +25,7 @@ import java.nio.ByteBuffer;
 import http_parser.*;
 import http_parser.lolevel.ParserSettings;
 import http_parser.lolevel.HTTPCallback;
+import http_parser.lolevel.HTTPHeadersCompleteCallback;
 import http_parser.lolevel.HTTPDataCallback;
 
 public class RubyHttpParser extends RubyObject {
@@ -127,6 +128,7 @@ public class RubyHttpParser extends RubyObject {
     final RubySymbol arraysSym = runtime.newSymbol("arrays");
     final RubySymbol mixedSym = runtime.newSymbol("mixed");
     final RubySymbol stopSym = runtime.newSymbol("stop");
+    final RubySymbol resetSym = runtime.newSymbol("reset");
     this.settings.on_header_value = new HTTPDataCallback() {
       public int cb (http_parser.lolevel.HTTPParser p, ByteBuffer buf, int pos, int len) {
         byte[] data = fetchBytes(buf, pos, len);
@@ -227,7 +229,7 @@ public class RubyHttpParser extends RubyObject {
         }
       }
     };
-    this.settings.on_headers_complete = new HTTPCallback() {
+    this.settings.on_headers_complete = new HTTPHeadersCompleteCallback() {
       public int cb (http_parser.lolevel.HTTPParser p) {
         IRubyObject ret = runtime.getNil();
 
@@ -243,7 +245,9 @@ public class RubyHttpParser extends RubyObject {
 
         if (ret == stopSym) {
           throw new StopException();
-        } else {
+        } else if (ret == resetSym) {
+          return 1;
+        }else {
           return 0;
         }
       }
