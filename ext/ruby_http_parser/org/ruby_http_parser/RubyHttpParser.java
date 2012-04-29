@@ -76,6 +76,8 @@ public class RubyHttpParser extends RubyObject {
 
   private IRubyObject callback_object;
 
+  private boolean completed;
+
   private byte[] _current_header;
   private byte[] _last_header;
 
@@ -91,6 +93,8 @@ public class RubyHttpParser extends RubyObject {
     this.on_message_complete = null;
 
     this.callback_object = null;
+
+    this.completed = false;
 
     this.header_value_type = runtime.getModule("HTTP").getClass("Parser").getInstanceVariable("@default_header_value_type");
 
@@ -211,6 +215,8 @@ public class RubyHttpParser extends RubyObject {
     this.settings.on_message_complete = new HTTPCallback() {
       public int cb (http_parser.lolevel.HTTPParser p) {
         IRubyObject ret = runtime.getNil();
+
+	completed = true;
 
         if (callback_object != null) {
           if (((RubyObject)callback_object).respondsTo("on_message_complete")) {
@@ -349,7 +355,7 @@ public class RubyHttpParser extends RubyObject {
       byte[] upData = fetchBytes(buf, buf.position(), buf.limit() - buf.position());
       ((RubyString)upgradeData).cat(upData);
 
-    } else if (buf.hasRemaining()) {
+    } else if (buf.hasRemaining() && !completed) {
       if (!stopped)
         throw new RaiseException(runtime, eParserError, "Could not parse data entirely", true);
     }
