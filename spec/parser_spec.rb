@@ -238,17 +238,12 @@ describe HTTP::Parser do
   end
 
   it "should ignore extra content beyond specified length" do
-    begin
     @parser <<
       "GET / HTTP/1.0\r\n" +
       "Content-Length: 5\r\n" +
       "\r\n" +
       "hello" +
       "  \n"
-    rescue HTTP::Parser::Error => err
-      # should throw "Connection already closed" in JRuby version
-      err.message.should == "Connection already closed"
-    end
 
     @body.should == 'hello'
     @done.should be_true
