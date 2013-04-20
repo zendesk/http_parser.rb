@@ -216,7 +216,7 @@ public class RubyHttpParser extends RubyObject {
       public int cb (http_parser.lolevel.HTTPParser p) {
         IRubyObject ret = runtime.getNil();
 
-	completed = true;
+        completed = true;
 
         if (callback_object != null) {
           if (((RubyObject)callback_object).respondsTo("on_message_complete")) {
@@ -253,7 +253,7 @@ public class RubyHttpParser extends RubyObject {
           throw new StopException();
         } else if (ret == resetSym) {
           return 1;
-        }else {
+        } else {
           return 0;
         }
       }
