@@ -25,7 +25,6 @@ import java.nio.ByteBuffer;
 import http_parser.*;
 import http_parser.lolevel.ParserSettings;
 import http_parser.lolevel.HTTPCallback;
-import http_parser.lolevel.HTTPHeadersCompleteCallback;
 import http_parser.lolevel.HTTPDataCallback;
 
 public class RubyHttpParser extends RubyObject {
@@ -235,7 +234,7 @@ public class RubyHttpParser extends RubyObject {
         }
       }
     };
-    this.settings.on_headers_complete = new HTTPHeadersCompleteCallback() {
+    this.settings.on_headers_complete = new HTTPCallback() {
       public int cb (http_parser.lolevel.HTTPParser p) {
         IRubyObject ret = runtime.getNil();
 
