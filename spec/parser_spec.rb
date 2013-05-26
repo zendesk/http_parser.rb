@@ -307,7 +307,7 @@ describe HTTP::Parser do
   %w[ request response ].each do |type|
     JSON.parse(File.read(File.expand_path("../support/#{type}s.json", __FILE__))).each do |test|
       test['headers'] ||= {}
-      next unless HTTP::Parser.strict? == test['strict']
+      next if !defined?(JRUBY_VERSION) and HTTP::Parser.strict? != test['strict']
 
       it "should parse #{type}: #{test['name']}" do
         @parser << test['raw']
