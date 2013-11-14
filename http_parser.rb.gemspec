@@ -6,6 +6,7 @@ Gem::Specification.new do |s|
 
   s.authors = ["Marc-Andre Cournoyer", "Aman Gupta"]
   s.email   = ["macournoyer@gmail.com", "aman@tmm1.net"]
+  s.license = 'MIT'
 
   s.homepage = "http://github.com/tmm1/http_parser.rb"
   s.files = `git ls-files`.split("\n") + Dir['ext/ruby_http_parser/vendor/**/*']
