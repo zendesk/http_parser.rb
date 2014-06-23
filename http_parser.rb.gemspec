@@ -15,7 +15,7 @@ Gem::Specification.new do |s|
   s.extensions    = ["ext/ruby_http_parser/extconf.rb"]
 
   s.add_development_dependency 'rake-compiler', '>= 0.7.9'
-  s.add_development_dependency 'rspec', '>= 2.0.1'
+  s.add_development_dependency 'rspec', '>= 3'
   s.add_development_dependency 'json', '>= 1.4.6'
   s.add_development_dependency 'benchmark_suite'
   s.add_development_dependency 'ffi'
