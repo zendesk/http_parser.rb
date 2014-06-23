@@ -1,11 +1,12 @@
-tmp
+*.bundle
 *.bundle
 *.gem
-*.o
-*.so
-*.bundle
 *.jar
+*.o
+*.rbc
+*.so
 *.swp
+Gemfile.lock
 Makefile
 tags
-*.rbc
+tmp
