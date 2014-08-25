@@ -87,7 +87,7 @@ describe HTTP::Parser do
     expect{ @parser << "BLAH" }.to raise_error(HTTP::Parser::Error)
   end
 
-  it "should abort parser via callback" do
+  it "should abort parser via header complete callback with a body" do
     @parser.on_headers_complete = proc { |e| @headers = e; :stop }
 
     data =
@@ -102,6 +102,63 @@ describe HTTP::Parser do
     expect(data[bytes..-1]).to eq('World')
 
     expect(@headers).to eq({'Content-Length' => '5'})
+    expect(@body).to be_empty
+    expect(@done).to be false
+  end
+
+  it "should abort parser via header complete callback without a body" do
+    @parser.on_headers_complete = proc { |e| @headers = e; :stop }
+
+    data =
+      "GET / HTTP/1.0\r\n" +
+      "Content-Length: 0\r\n" +
+      "\r\n"
+
+    bytes = @parser << data
+
+    expect(bytes).to eq(37)
+    expect(data[bytes..-1]).to eq('')
+
+    expect(@headers).to eq({'Content-Length' => '0'})
+    expect(@body).to be_empty
+    expect(@done).to be false
+  end
+
+  it "should abort parser via message complete callback with a body" do
+    @parser.on_message_complete = proc { :stop }
+
+    data =
+      "CONNECT www.example.com:443 HTTP/1.0\r\n" +
+      "Connection: keep-alive\r\n" +
+      "\r\n" +
+      "World"
+
+    bytes = @parser << data
+
+    expect(bytes).to eq(64)
+    expect(data[bytes..-1]).to eq('World')
+
+    expect(@headers).to eq({'Connection' => 'keep-alive'})
+    expect(@parser.upgrade_data).to eq('World')
+    expect(@body).to be_empty
+    expect(@done).to be false
+  end
+
+  it "should abort parser via message complete callback without a body" do
+    @parser.on_message_complete = proc { :stop }
+
+    data =
+      "CONNECT www.example.com:443 HTTP/1.0\r\n" +
+      "Connection: keep-alive\r\n" +
+      "\r\n"
+
+    bytes = @parser << data
+
+    expect(bytes).to eq(64)
+    expect(data[bytes..-1]).to eq('')
+
+    expect(@headers).to eq({'Connection' => 'keep-alive'})
+    expect(@parser.upgrade_data).to eq('')
     expect(@body).to be_empty
     expect(@done).to be false
   end
