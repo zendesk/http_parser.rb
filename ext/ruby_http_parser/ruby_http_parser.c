@@ -127,13 +127,26 @@ int on_message_begin(ryah_http_parser *parser) {
 
 int on_status(ryah_http_parser *parser, const char *at, size_t length) {
   GET_WRAPPER(wrapper, parser);
-  rb_str_cat(wrapper->status, at, length);
+
+  if (at && length) {
+    if (wrapper->status == Qnil) {
+      wrapper->status = rb_str_new(at, length);
+    } else {
+      rb_str_cat(wrapper->status, at, length);
+    }
+  }
   return 0;
 }
 
 int on_url(ryah_http_parser *parser, const char *at, size_t length) {
   GET_WRAPPER(wrapper, parser);
-  rb_str_cat(wrapper->request_url, at, length);
+  if (at && length) {
+    if (wrapper->request_url == Qnil) {
+      wrapper->request_url = rb_str_new(at, length);
+    } else {
+      rb_str_cat(wrapper->request_url, at, length);
+    }
+  }
   return 0;
 }
 
@@ -146,7 +159,6 @@ int on_header_field(ryah_http_parser *parser, const char *at, size_t length) {
   } else {
     rb_str_cat(wrapper->curr_field_name, at, length);
   }
-
   return 0;
 }
 
@@ -298,6 +310,21 @@ VALUE ResponseParser_alloc(VALUE klass) {
 
 VALUE Parser_strict_p(VALUE klass) {
   return HTTP_PARSER_STRICT == 1 ? Qtrue : Qfalse;
+}
+
+VALUE Parser_parse_url_p(VALUE klass, VALUE url, VALUE connect) {
+  struct ryah_http_parser_url parsed_url;
+  memset(&parsed_url, 0, sizeof(struct ryah_http_parser_url));
+
+  Check_Type(url, T_STRING);
+  char *ptr = RSTRING_PTR(url);
+  long len = RSTRING_LEN(url);
+  const int is_connect = (connect == Qtrue) ? 1 : 0;
+  if(ryah_http_parser_parse_url(ptr, len, is_connect, &parsed_url) != 0) {
+        return Qnil;
+  }
+  VALUE fields = rb_hash_new();
+  return fields;
 }
 
 VALUE Parser_initialize(int argc, VALUE *argv, VALUE self) {
@@ -500,6 +527,7 @@ void Init_ruby_http_parser() {
   rb_define_alloc_func(cResponseParser, ResponseParser_alloc);
 
   rb_define_singleton_method(cParser, "strict?", Parser_strict_p, 0);
+  rb_define_singleton_method(cParser, "parse_url", Parser_parse_url_p, 0);
   rb_define_method(cParser, "initialize", Parser_initialize, -1);
 
   rb_define_method(cParser, "on_message_begin=", Parser_set_on_message_begin, 1);
