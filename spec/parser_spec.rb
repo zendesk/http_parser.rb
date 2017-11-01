@@ -1,3 +1,6 @@
+if defined?(Encoding)
+  Encoding.default_external = "UTF-8"
+end
 require "spec_helper"
 require "json"
 
@@ -377,23 +380,14 @@ describe HTTP::Parser do
           expect(@parser.upgrade_data).to eq(test['upgrade'])
         end
 
-        fields = %w[
-          http_major
-          http_minor
-        ]
+        expect(@parser.send("http_major")).to eq(test["http_major"])
+        expect(@parser.send("http_minor")).to eq(test["http_minor"])
 
         if test['type'] == 'HTTP_REQUEST'
-          fields += %w[
-            request_url
-          ]
+          expect(@parser.send("request_url")).to eq(test["request_url"].force_encoding(Encoding::BINARY))
         else
-          fields += %w[
-            status_code
-          ]
-        end
-
-        fields.each do |field|
-          expect(@parser.send(field)).to eq(test[field])
+          expect(@parser.send("status_code")).to eq(test["status_code"])
+          expect(@parser.send("status")).to eq(test["status"].force_encoding(Encoding::BINARY))
         end
 
         expect(@headers.size).to eq(test['num_headers'])
