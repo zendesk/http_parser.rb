@@ -9,7 +9,7 @@ This gem is built on top of [joyent/http-parser](https://github.com/joyent/http-
 
 This gem aims to work on all major Ruby platforms, including:
 
-- MRI 1.8, 1.9 and 2.0
+- MRI 1.8, 1.9 and 2.0; should work on MRI 2.4+
 - Rubinius
 - JRuby
 - win32
